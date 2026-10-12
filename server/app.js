@@ -540,7 +540,10 @@ export function createApp(config, { store = new Store(config.dbPath), fetchImpl 
       res.writeHead(403).end();
       return;
     }
-    if (!existsSync(file) || statSync(file).isDirectory()) file = join(staticRoot, 'index.html');
+    if (!existsSync(file) || statSync(file).isDirectory()) {
+      // Clean URLs: /privacy serves privacy.html (matches vercel.json "cleanUrls").
+      file = !extname(file) && existsSync(`${file}.html`) ? `${file}.html` : join(staticRoot, 'index.html');
+    }
     if (!existsSync(file)) {
       res.writeHead(404, { 'content-type': 'text/plain' }).end('Run "npm run build" first, or use "npm run dev" for the client.');
       return;

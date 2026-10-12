@@ -1691,3 +1691,12 @@ input[type='text'] {
     flex-wrap: wrap;
   }
 }
+
+.legal-links {
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.legal-links a {
+  color: var(--gold);
+}

@@ -75,6 +75,8 @@ const en = {
   'account.guestName': 'Player name',
   'account.guestPlaceholder': 'Your name',
   'account.playGuest': 'Play as guest',
+  'account.legal':
+    'By playing online you agree to the <a href="/term-of-use" target="_blank" rel="noopener">Terms of Use</a> and <a href="/privacy" target="_blank" rel="noopener">Privacy Policy</a>.',
   'account.facebook': 'Continue with Facebook',
   'account.facebookConnect': 'Connect Facebook',
   'account.facebookConnected': 'Connected to Facebook',
@@ -250,6 +252,8 @@ const en = {
           in code. The rules follow the description provided for this project. See <i>Learn the Rules</i> for the details
           used where traditions differ.</p>`,
   'about.controlsTitle': 'Controls',
+  'about.privacy': 'Privacy Policy',
+  'about.terms': 'Terms of Use',
   'about.controls': `
           <li><b>Click / tap</b> a bin to play it.</li>
           <li><b>Drag</b> to orbit, <b>scroll / pinch</b> to zoom, <b>right-drag / two fingers</b> to pan.</li>
@@ -447,6 +451,8 @@ const pt = {
   'account.guestName': 'Nome do jogador',
   'account.guestPlaceholder': 'O seu nome',
   'account.playGuest': 'Jogar como convidado',
+  'account.legal':
+    'Ao jogar online aceita os <a href="/term-of-use#pt" target="_blank" rel="noopener">Termos de Utilização</a> e a <a href="/privacy#pt" target="_blank" rel="noopener">Política de Privacidade</a>.',
   'account.facebook': 'Continuar com o Facebook',
   'account.facebookConnect': 'Ligar ao Facebook',
   'account.facebookConnected': 'Ligado ao Facebook',
@@ -611,6 +617,8 @@ const pt = {
           por código. As regras seguem a descrição fornecida para este projeto. Consulte <i>Aprender as regras</i> para os pormenores
           adotados onde as tradições diferem.</p>`,
   'about.controlsTitle': 'Controlos',
+  'about.privacy': 'Política de Privacidade',
+  'about.terms': 'Termos de Utilização',
   'about.controls': `
           <li><b>Clique / toque</b> numa casa para a jogar.</li>
           <li><b>Arraste</b> para rodar a vista, <b>roda do rato / beliscar</b> para fazer zoom, <b>arrastar com o botão direito / dois dedos</b> para deslocar.</li>
