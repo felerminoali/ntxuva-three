@@ -1,0 +1,24 @@
+# Render Blueprint for the online game server (WebSocket + SQLite).
+# The web client stays on Vercel; set VITE_SERVER_URL there to wss://<this service>.onrender.com/ws
+services:
+  - type: web
+    name: ntxuva-server
+    runtime: node
+    plan: free
+    buildCommand: npm ci
+    startCommand: node server/index.js
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_VERSION
+        value: "24"
+      - key: FACEBOOK_APP_ID
+        sync: false
+      - key: FACEBOOK_APP_SECRET
+        sync: false
+    # The free plan has no persistent disk: accounts and coins reset when the service
+    # restarts. On a paid plan, uncomment this to keep the database:
+    # disk:
+    #   name: ntxuva-data
+    #   mountPath: /var/data
+    #   sizeGB: 1
+    # and add an env var DB_PATH=/var/data/ntuxa.db
