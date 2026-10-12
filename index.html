@@ -1,0 +1,443 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#2b1a10" />
+    <meta name="description" content="Ntuxa (Ntxuva) — the four-row mancala game of Mozambique, in 3D." />
+    <title>Ntuxa — 3D</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%237a4a24'/%3E%3Cg fill='%232b1a10'%3E%3Ccircle cx='16' cy='16' r='6'/%3E%3Ccircle cx='32' cy='16' r='6'/%3E%3Ccircle cx='48' cy='16' r='6'/%3E%3Ccircle cx='16' cy='48' r='6'/%3E%3Ccircle cx='32' cy='48' r='6'/%3E%3Ccircle cx='48' cy='48' r='6'/%3E%3C/g%3E%3C/svg%3E" />
+  </head>
+  <body>
+    <div id="stage" aria-label="3D game board" data-i18n-aria="app.stage"></div>
+
+    <div id="loading" class="loading" data-i18n="app.loading">Carving the board…</div>
+
+    <!-- Main menu -->
+    <section id="screen-menu" class="screen" hidden>
+      <div class="panel menu-panel">
+        <div class="pattern-band" aria-hidden="true"></div>
+        <h1 class="title">Ntuxa</h1>
+        <p class="subtitle" data-i18n="menu.subtitle">Ntxuva · the four-row mancala of Mozambique</p>
+        <nav class="menu-buttons">
+          <button class="btn primary" data-nav="play" data-i18n="menu.play">Play</button>
+          <button class="btn" data-nav="rules" data-i18n="menu.rules">Learn the Rules</button>
+          <button class="btn" data-nav="settings" data-i18n="menu.settings">Settings</button>
+          <button class="btn" data-nav="about" data-i18n="menu.about">About</button>
+        </nav>
+        <div class="pattern-band" aria-hidden="true"></div>
+      </div>
+    </section>
+
+    <!-- Mode selection -->
+    <section id="screen-play" class="screen" hidden>
+      <div class="panel wide">
+        <h2 data-i18n="play.title">Choose a game</h2>
+        <div class="mode-grid">
+          <article class="mode-card online-card">
+            <h3 data-i18n="online.mode">Play online</h3>
+            <p data-i18n="online.modeDesc">Find an opponent on the internet and stake coins in rooms across Mozambique.</p>
+            <button class="btn primary" id="btn-online" data-i18n="online.join">Play</button>
+          </article>
+          <article class="mode-card">
+            <h3 data-i18n="play.local">Two players</h3>
+            <p data-i18n="play.localDesc">Take turns on the same device. South starts.</p>
+            <button class="btn primary" data-start="local" data-i18n="common.start">Start</button>
+          </article>
+          <article class="mode-card">
+            <h3 data-i18n="play.ai">Against the computer</h3>
+            <label><span data-i18n="play.difficulty">Difficulty</span>
+              <select id="opt-difficulty">
+                <option value="easy" data-i18n="play.easy">Easy</option>
+                <option value="medium" data-i18n="play.medium">Medium</option>
+                <option value="hard" data-i18n="play.hard">Hard</option>
+              </select>
+            </label>
+            <label><span data-i18n="play.youPlay">You play</span>
+              <select id="opt-side">
+                <option value="0" data-i18n="play.sideSouth">South (moves first)</option>
+                <option value="1" data-i18n="play.sideNorth">North (moves second)</option>
+              </select>
+            </label>
+            <button class="btn primary" data-start="ai" data-i18n="common.start">Start</button>
+          </article>
+          <article class="mode-card">
+            <h3 data-i18n="play.practice">Practice</h3>
+            <p data-i18n="play.practiceDesc">Control both sides, preview every move and ask for hints. Undo freely.</p>
+            <button class="btn primary" data-start="practice" data-i18n="common.start">Start</button>
+          </article>
+          <article class="mode-card">
+            <h3 data-i18n="play.tutorial">Tutorial</h3>
+            <p data-i18n="play.tutorialDesc">A guided, hands-on lesson on sowing, relays, captures and the endgame.</p>
+            <button class="btn primary" data-start="tutorial" data-i18n="common.start">Start</button>
+          </article>
+        </div>
+        <label class="toggle rule-option"><input type="checkbox" id="opt-extra" /> <span data-i18n="rule.extraCapture">Extra bin rule: after a capture, also take one opponent bin of your choice</span></label>
+        <p class="note"><span data-i18n="play.boardSize">Board size:</span> <span id="board-size-note">4 × 16</span> <span data-i18n="play.boardSizeHint">(change it in Settings).</span></p>
+        <button class="btn ghost" data-back data-i18n="common.back">Back</button>
+      </div>
+    </section>
+
+    <!-- Rules -->
+    <section id="screen-rules" class="screen" hidden>
+      <div class="panel wide scroll">
+        <h2 data-i18n="rules.title">How to play Ntuxa</h2>
+        <div class="rules" data-i18n-html="rules.html">
+          <h3>The board</h3>
+          <p>The board has four rows of bins (4 × 16 by default; 4 × 8 up to 4 × 24 boards are traditional).
+            Each player owns the two rows on their side: the <b>attacking row</b> in the middle of the board
+            and the <b>back row</b> at the edge. At the start every bin holds <b>two seeds</b>. South moves first.</p>
+          <h3>A turn</h3>
+          <ol>
+            <li>Choose one of your non-empty bins.</li>
+            <li>Remove all the seeds from that bin.</li>
+            <li>Drop them one by one into the following bins, <b>anti-clockwise</b>, around your own two rows.</li>
+            <li>If the last seed lands in a bin that was <b>not empty</b>, pick up all the seeds in that bin and continue
+              sowing (a <b>relay</b>). If it lands in an <b>empty</b> bin, the sowing ends.</li>
+          </ol>
+          <h3>Capturing</h3>
+          <p>When the sowing ends in an empty bin of your <b>attacking row</b> and your opponent has seeds in the same
+            column, you capture all of their seeds in that column (both their attacking and back bins).
+            Captured seeds are removed from the game.
+            Ending in your back row, or opposite an empty column, simply ends your turn.</p>
+          <p><b>Optional extra bin rule:</b> before a game you may choose to also take <b>one extra bin of your
+            choice</b> from the opponent's side after every capture. Online, both players must pick the same rule.</p>
+          <h3>Two phases</h3>
+          <p><b>Phase one:</b> while you have any bin with more than one seed, you may not play a bin holding a single seed.</p>
+          <p><b>Phase two:</b> once every non-empty bin on your side holds exactly one seed, you may play any single seed
+            whose next bin is empty.</p>
+          <h3>End of the game</h3>
+          <p>You win by capturing all of your opponent's seeds.</p>
+          <h3>Clarifications used in this version</h3>
+          <ul>
+            <li>A sowing long enough to go all the way around also drops a seed into the bin it started from.</li>
+            <li>If a player still has seeds but no legal move (only possible in phase two when no single seed has an empty bin
+              ahead of it), that player loses.</li>
+            <li>A safety limit stops a single turn after 20,000 sown seeds, in case of an endless relay loop.</li>
+            <li>An optional move limit (off by default) can end very long games; the player with more seeds then wins.</li>
+          </ul>
+        </div>
+        <div class="row">
+          <button class="btn primary" data-start="tutorial" data-i18n="rules.startTutorial">Start the interactive tutorial</button>
+          <button class="btn ghost" data-back data-i18n="common.back">Back</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Settings -->
+    <section id="screen-settings" class="screen" hidden>
+      <div class="panel wide scroll">
+        <h2 data-i18n="settings.title">Settings</h2>
+        <form id="settings-form" class="settings" onsubmit="return false">
+          <fieldset>
+            <legend data-i18n="settings.sound">Sound</legend>
+            <label class="toggle"><input type="checkbox" name="sound" /> <span data-i18n="settings.soundEffects">Sound effects</span></label>
+            <label class="toggle"><input type="checkbox" name="music" /> <span data-i18n="settings.music">Background music</span></label>
+            <label><span data-i18n="settings.volume">Volume</span> <input type="range" name="volume" min="0" max="1" step="0.05" /></label>
+          </fieldset>
+          <fieldset>
+            <legend data-i18n="lang.label">Language</legend>
+            <label><span data-i18n="lang.label">Language</span>
+              <select name="language">
+                <option value="pt">Português</option>
+                <option value="en">English</option>
+              </select>
+            </label>
+          </fieldset>
+          <fieldset>
+            <legend data-i18n="settings.graphics">Graphics</legend>
+            <label><span data-i18n="scenario.label">Scenery</span>
+              <select name="scenario">
+                <option value="village" data-i18n="scenario.village">Village under the mango tree</option>
+                <option value="beach" data-i18n="scenario.beach">Indian Ocean beach</option>
+                <option value="market" data-i18n="scenario.market">Maputo market at dusk</option>
+                <option value="savanna" data-i18n="scenario.savanna">Gorongosa savanna at sunset</option>
+              </select>
+            </label>
+            <label><span data-i18n="settings.quality">Quality</span>
+              <select name="quality">
+                <option value="low" data-i18n="settings.qualityLow">Low (no shadows, fastest)</option>
+                <option value="medium" data-i18n="settings.qualityMedium">Medium</option>
+                <option value="high" data-i18n="settings.qualityHigh">High (sharp shadows)</option>
+              </select>
+            </label>
+            <label><span data-i18n="settings.animationSpeed">Animation speed</span>
+              <select name="animationSpeed">
+                <option value="0.6" data-i18n="settings.speedSlow">Slow</option>
+                <option value="1" data-i18n="settings.speedNormal">Normal</option>
+                <option value="1.8" data-i18n="settings.speedFast">Fast</option>
+                <option value="3.5" data-i18n="settings.speedVeryFast">Very fast</option>
+              </select>
+            </label>
+            <label class="toggle"><input type="checkbox" name="showCounts" /> <span data-i18n="settings.showCounts">Show seed counts on the board</span></label>
+            <label class="toggle"><input type="checkbox" name="showHints" /> <span data-i18n="settings.showHints">Highlight playable bins</span></label>
+            <label class="toggle"><input type="checkbox" name="cameraFollow" /> <span data-i18n="settings.cameraFollow">Turn the view toward the player to move (two-player mode)</span></label>
+          </fieldset>
+          <fieldset>
+            <legend data-i18n="settings.game">Game (applies to new games)</legend>
+            <label><span data-i18n="settings.boardSize">Board size</span>
+              <select name="columns">
+                <option value="8" data-i18n="settings.size8">4 × 8 (32 bins)</option>
+                <option value="9" data-i18n="settings.size9">4 × 9 (36 bins)</option>
+                <option value="12" data-i18n="settings.size12">4 × 12 (48 bins)</option>
+                <option value="13" data-i18n="settings.size13">4 × 13 (52 bins)</option>
+                <option value="15" data-i18n="settings.size15">4 × 15 (60 bins)</option>
+                <option value="16" data-i18n="settings.size16">4 × 16 (64 bins)</option>
+                <option value="24" data-i18n="settings.size24">4 × 24 (96 bins)</option>
+              </select>
+            </label>
+            <label><span data-i18n="settings.moveLimit">Optional move limit (house rule)</span>
+              <select name="moveLimit">
+                <option value="0" data-i18n="settings.moveLimitOff">Off — play until all seeds are captured</option>
+                <option value="200" data-i18n="settings.moveLimit200">200 turns, then most seeds wins</option>
+                <option value="400" data-i18n="settings.moveLimit400">400 turns, then most seeds wins</option>
+              </select>
+            </label>
+          </fieldset>
+        </form>
+        <button class="btn ghost" data-back data-i18n="common.back">Back</button>
+      </div>
+    </section>
+
+    <!-- About -->
+    <section id="screen-about" class="screen" hidden>
+      <div class="panel wide scroll">
+        <h2 data-i18n="about.title">About Ntuxa</h2>
+        <div data-i18n-html="about.html"><p><b>Ntxuva</b> is a traditional mancala game from Mozambique and belongs to the four-row
+          ("Mancala IV") family that is believed to have originated in East Africa, alongside games such as
+          Bao (Zanzibar), Igisoro (Rwanda) and Omweso (Uganda). It is called <i>Ntxuva</i> in the south of Mozambique and
+          <i>Mthadje</i> or <i>M'pale</i> in the north.</p>
+        <p>It is played on carved wooden boards, or in holes dug in the ground, with seeds or small stones. Boards
+          range from 4 × 8 to 4 × 24 bins and are always split evenly between the two players.</p>
+        <p>This version is built with Three.js and runs entirely in your browser. All graphics and sounds are generated
+          in code. The rules follow the description provided for this project. See <i>Learn the Rules</i> for the details
+          used where traditions differ.</p></div>
+        <h3 data-i18n="about.controlsTitle">Controls</h3>
+        <ul class="controls-list" data-i18n-html="about.controls">
+          <li><b>Click / tap</b> a bin to play it.</li>
+          <li><b>Drag</b> to orbit, <b>scroll / pinch</b> to zoom, <b>right-drag / two fingers</b> to pan.</li>
+          <li><b>Arrow keys</b> move the keyboard cursor, <b>Enter</b> plays the bin.</li>
+          <li><b>Space</b> or a click during an animation fast-forwards it.</li>
+          <li><b>U</b> or <b>Ctrl+Z</b> undo · <b>H</b> hint (practice) · <b>C</b> reset the camera · <b>Esc</b> pause.</li>
+        </ul>
+        <button class="btn ghost" data-back data-i18n="common.back">Back</button>
+      </div>
+    </section>
+
+    <!-- Online: sign in -->
+    <section id="screen-signin" class="screen" hidden>
+      <div class="panel">
+        <h2 data-i18n="account.signinTitle">Sign in to play online</h2>
+        <p data-i18n="account.signinText">Your profile keeps your coins, level and results.</p>
+        <button class="btn fb" id="signin-facebook"><span class="fb-logo" aria-hidden="true">f</span> <span data-i18n="account.facebook">Continue with Facebook</span></button>
+        <p class="note" id="signin-fb-note" hidden data-i18n="account.facebookUnavailable">Facebook login is not configured on this server.</p>
+        <form id="signin-guest" class="settings" onsubmit="return false">
+          <label><span data-i18n="account.guestName">Player name</span>
+            <input type="text" id="signin-name" maxlength="24" autocomplete="nickname" data-i18n-placeholder="account.guestPlaceholder" />
+          </label>
+          <button class="btn primary" type="submit" data-i18n="account.playGuest">Play as guest</button>
+        </form>
+        <p class="status-line" id="signin-status" aria-live="polite"></p>
+        <button class="btn ghost" data-back data-i18n="common.back">Back</button>
+      </div>
+    </section>
+
+    <!-- Online: lobby -->
+    <section id="screen-online" class="screen" hidden>
+      <div class="panel wide scroll">
+        <div class="profile-card">
+          <div class="avatar" id="profile-avatar" aria-hidden="true"></div>
+          <div class="profile-main">
+            <div class="profile-name"><span id="profile-name"></span> <span class="fb-badge" id="profile-fb" hidden title="Facebook">f</span></div>
+            <div class="profile-level"><span id="profile-level"></span><span class="xp-bar"><span id="profile-xp"></span></span></div>
+            <div class="profile-record" id="profile-record"></div>
+          </div>
+          <div class="coin-box"><span class="coin" aria-hidden="true"></span><b id="profile-coins">0</b></div>
+        </div>
+        <div class="row wrap account-actions">
+          <button class="btn small primary" id="online-bonus"></button>
+          <button class="btn small" id="online-store" data-i18n="account.store">Get coins</button>
+          <button class="btn small" id="online-leaderboard" data-i18n="account.leaderboard">Leaderboard</button>
+          <button class="btn small" id="online-rename" data-i18n="account.rename">Rename</button>
+          <button class="btn small fb" id="online-facebook"><span class="fb-logo" aria-hidden="true">f</span> <span data-i18n="account.facebookConnect">Connect Facebook</span></button>
+          <button class="btn small ghost" id="online-signout" data-i18n="account.signout">Sign out</button>
+        </div>
+        <fieldset class="capture-choice">
+          <legend data-i18n="online.captureRule">Capture rule for this game</legend>
+          <label class="toggle"><input type="radio" name="online-rule" value="column" checked /> <span data-i18n="online.captureColumn">Column only (standard)</span></label>
+          <label class="toggle"><input type="radio" name="online-rule" value="extra" /> <span data-i18n="online.captureExtra">Column + one extra bin of my choice</span></label>
+          <p class="note" data-i18n="online.captureNote">You are only matched with players who chose the same rule.</p>
+        </fieldset>
+        <div class="lobby-head">
+          <h2 data-i18n="online.title">Online rooms</h2>
+          <span class="note" id="online-count"></span>
+        </div>
+        <p class="status-line" id="online-status" aria-live="polite"></p>
+        <ol class="tier-list" id="tier-list"></ol>
+        <button class="btn ghost" data-back data-i18n="common.back">Back</button>
+      </div>
+    </section>
+
+    <!-- Online: searching -->
+    <section id="screen-searching" class="screen dim" hidden>
+      <div class="panel">
+        <div class="pattern-band" aria-hidden="true"></div>
+        <h2><span data-i18n="online.searching">Looking for an opponent</span><span class="dots" aria-hidden="true"></span></h2>
+        <p id="searching-room"></p>
+        <p class="note" id="searching-rule"></p>
+        <div class="spinner" aria-hidden="true"></div>
+        <button class="btn ghost" id="searching-cancel" data-i18n="online.cancel">Cancel</button>
+      </div>
+    </section>
+
+    <!-- Online: store -->
+    <section id="screen-store" class="screen" hidden>
+      <div class="panel wide scroll">
+        <h2 data-i18n="store.title">Coin store</h2>
+        <p class="note warn" data-i18n="store.note">Demo store: coins are free and purely virtual.</p>
+        <div class="store-grid" id="store-grid"></div>
+        <button class="btn ghost" data-back data-i18n="common.back">Back</button>
+      </div>
+    </section>
+
+    <!-- Online: leaderboard -->
+    <section id="screen-leaderboard" class="screen" hidden>
+      <div class="panel wide scroll">
+        <h2 data-i18n="leaderboard.title">Richest players</h2>
+        <ol class="leaderboard" id="leaderboard-list"></ol>
+        <button class="btn ghost" data-back data-i18n="common.back">Back</button>
+      </div>
+    </section>
+
+    <!-- In-game HUD -->
+    <div id="hud" hidden>
+      <header class="topbar" id="topbar">
+        <div class="tb-shell">
+          <button class="tb-icon" id="btn-history" title="Move history" aria-label="Move history" data-i18n-title="hud.history" data-i18n-aria="hud.history">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h10" /></svg>
+          </button>
+          <div class="tb-player south" id="card-0">
+            <button class="tb-avatar" id="avatar-0" aria-haspopup="dialog" data-i18n-title="hud.playerInfo" title="Player info">
+              <span class="tb-ring"></span>
+              <span class="tb-face" id="face-0">S</span>
+            </button>
+            <div class="tb-meta">
+              <div class="tb-name"><span id="name-0">South</span><span class="tb-badge" id="badge-0" hidden></span></div>
+              <div class="tb-sub" data-i18n-title="hud.seedsOnBoard" title="Seeds on the board"><span class="tb-seed"></span><span id="seeds-0">0</span><span class="tb-sub-label" data-i18n="hud.seeds">seeds</span></div>
+            </div>
+            <div class="tb-score" data-i18n-title="hud.capturedTitle" title="Captured seeds">
+              <span class="tb-score-num" id="caps-0">0</span>
+              <span class="tb-score-label" data-i18n="hud.captured">captured</span>
+            </div>
+            <span class="tb-turn-chip" data-i18n="hud.turnChip">Turn</span>
+          </div>
+          <div class="tb-center">
+            <div class="tb-place" id="tb-place"></div>
+            <div class="tb-vs" id="tb-vs">
+              <span class="tb-arrow left" aria-hidden="true">◀</span>
+              <span class="tb-vs-text">VS</span>
+              <span class="tb-arrow right" aria-hidden="true">▶</span>
+            </div>
+            <div class="tb-round" id="tb-round"></div>
+          </div>
+          <div class="tb-player north" id="card-1">
+            <button class="tb-avatar" id="avatar-1" aria-haspopup="dialog" data-i18n-title="hud.playerInfo" title="Player info">
+              <span class="tb-ring"></span>
+              <span class="tb-face" id="face-1">N</span>
+            </button>
+            <div class="tb-meta">
+              <div class="tb-name"><span id="name-1">North</span><span class="tb-badge" id="badge-1" hidden></span></div>
+              <div class="tb-sub" data-i18n-title="hud.seedsOnBoard" title="Seeds on the board"><span class="tb-seed"></span><span id="seeds-1">0</span><span class="tb-sub-label" data-i18n="hud.seeds">seeds</span></div>
+            </div>
+            <div class="tb-score" data-i18n-title="hud.capturedTitle" title="Captured seeds">
+              <span class="tb-score-num" id="caps-1">0</span>
+              <span class="tb-score-label" data-i18n="hud.captured">captured</span>
+            </div>
+            <span class="tb-turn-chip" data-i18n="hud.turnChip">Turn</span>
+          </div>
+          <button class="tb-icon" id="btn-pause" title="Pause (Esc)" aria-label="Pause" data-i18n-title="hud.pauseTitle" data-i18n-aria="hud.pause">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5v14M15 5v14" /></svg>
+          </button>
+        </div>
+        <div class="tb-balance" aria-hidden="true"><span class="south" id="bal-0"></span><span class="north" id="bal-1"></span></div>
+        <div class="tb-status">
+          <div class="turn-banner" id="turn-banner" aria-live="polite">South to move</div>
+          <div class="turn-clock" id="turn-clock" hidden></div>
+        </div>
+      </header>
+      <div class="player-pop" id="player-pop" role="dialog" aria-modal="false" hidden>
+        <button class="pop-close" id="player-pop-close" aria-label="Close" data-i18n-aria="common.close">✕</button>
+        <div class="pop-head">
+          <span class="pop-avatar" id="pop-avatar"></span>
+          <div>
+            <div class="pop-name" id="pop-name"></div>
+            <div class="pop-tag" id="pop-tag"></div>
+          </div>
+        </div>
+        <dl class="pop-stats" id="pop-stats"></dl>
+      </div>
+      <aside id="history-panel" class="history" hidden>
+        <h3 data-i18n="hud.history">Move history</h3>
+        <ol id="history-list"></ol>
+      </aside>
+      <footer class="hud-bottom">
+        <div class="info-line" id="info-line" aria-live="polite"></div>
+        <div class="hud-actions">
+          <button class="btn small" id="btn-undo" title="Undo (U)" data-i18n-title="hud.undoTitle" data-i18n="hud.undo">↶ Undo</button>
+          <button class="btn small" id="btn-hint" title="Hint (H)" data-i18n-title="hud.hintTitle" data-i18n="hud.hint">💡 Hint</button>
+          <button class="btn small" id="btn-skip" title="Skip animation (Space)" data-i18n-title="hud.skipTitle" data-i18n="hud.skip" hidden>⏩ Skip</button>
+          <button class="btn small" id="btn-camera" title="Reset camera (C)" data-i18n-title="hud.cameraTitle" data-i18n="hud.camera">⟲ View</button>
+        </div>
+      </footer>
+    </div>
+
+    <!-- Tutorial panel -->
+    <aside id="tutorial-panel" class="tutorial" hidden>
+      <div class="tut-head">
+        <span id="tut-step">1 / 8</span>
+        <h3 id="tut-title"></h3>
+      </div>
+      <div id="tut-body" class="tut-body"></div>
+      <div id="tut-done" class="tut-done" hidden></div>
+      <div class="row">
+        <button class="btn small ghost" id="tut-prev" data-i18n="common.back">Back</button>
+        <button class="btn small ghost" id="tut-retry" data-i18n="tutorial.retry">Retry</button>
+        <button class="btn small primary" id="tut-next">Next</button>
+      </div>
+      <button class="btn small ghost exit" id="tut-exit" data-i18n="tutorial.exit">Exit tutorial</button>
+    </aside>
+
+    <!-- Pause -->
+    <section id="screen-pause" class="screen dim" hidden>
+      <div class="panel">
+        <h2 data-i18n="pause.title">Paused</h2>
+        <nav class="menu-buttons">
+          <button class="btn primary" id="pause-resume" data-i18n="pause.resume">Resume</button>
+          <button class="btn" id="pause-restart" data-i18n="pause.restart">Restart</button>
+          <button class="btn danger" id="pause-resign" hidden data-i18n="online.resign">Resign</button>
+          <button class="btn" id="pause-rules" data-i18n="pause.rules">Rules</button>
+          <button class="btn" id="pause-settings" data-i18n="menu.settings">Settings</button>
+          <button class="btn ghost" id="pause-menu" data-i18n="common.mainMenu">Main menu</button>
+        </nav>
+      </div>
+    </section>
+
+    <!-- End of game -->
+    <section id="screen-end" class="screen dim" hidden>
+      <div class="panel">
+        <div class="pattern-band" aria-hidden="true"></div>
+        <h2 id="end-title">South wins!</h2>
+        <p id="end-detail"></p>
+        <nav class="menu-buttons">
+          <button class="btn primary" id="end-again">Play again</button>
+          <button class="btn" id="end-view" data-i18n="end.viewBoard">View the board</button>
+          <button class="btn ghost" id="end-menu" data-i18n="common.mainMenu">Main menu</button>
+        </nav>
+      </div>
+    </section>
+
+    <div id="toasts" class="toasts" aria-live="assertive"></div>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
