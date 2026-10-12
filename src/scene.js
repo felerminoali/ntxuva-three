@@ -201,20 +201,40 @@ export class Stage {
     this.renderer.setSize(w, h, false);
     this.camera.aspect = w / h;
     this.camera.updateProjectionMatrix();
+    // Re-frame when the phone rotates between portrait and landscape.
+    const portrait = this.isPortrait();
+    if (this.portrait !== undefined && this.portrait !== portrait) this.frame(this.viewSide, true);
+    this.portrait = portrait;
+  }
+
+  isPortrait() {
+    return this.camera.aspect < 0.9;
   }
 
   /** Camera position that frames the whole board from the given side (1 = South, -1 = North). */
   framing(side = this.viewSide) {
     const aspect = this.camera.aspect;
-    const portrait = aspect < 0.9;
-    const elevation = portrait ? 1.2 : 0.95; // radians above the horizon
     const vfov = THREE.MathUtils.degToRad(this.camera.fov);
     const hfov = 2 * Math.atan(Math.tan(vfov / 2) * aspect);
-    const halfW = this.boardWidth / 2 + (portrait ? 0.4 : 2.6);
+    const target = new THREE.Vector3(0, 0.3, 0);
+    if (this.isPortrait()) {
+      // Narrow screens: look down the length of the board so its long side runs
+      // top-to-bottom, with the viewer's rows on the right-hand side.
+      const elevation = 1.25;
+      const halfLen = this.boardWidth / 2 + 0.6;
+      const halfDepth = BOARD_DEPTH / 2 + 0.35;
+      // Leave room for the top bar and the bottom buttons (~78% of the height is free).
+      const distLen = (halfLen * Math.sin(elevation)) / (Math.tan(vfov / 2) * 0.78) + halfLen * Math.cos(elevation) * 0.5;
+      const distDepth = halfDepth / Math.tan(hfov / 2);
+      const dist = THREE.MathUtils.clamp(Math.max(distLen, distDepth), 7, 80);
+      const position = new THREE.Vector3(-Math.cos(elevation) * dist * side, Math.sin(elevation) * dist, 0).add(target);
+      return { position, target };
+    }
+    const elevation = 0.95; // radians above the horizon
+    const halfW = this.boardWidth / 2 + 2.6;
     const distW = halfW / Math.tan(hfov / 2);
     const distD = 4.6 / Math.tan(vfov / 2);
     const dist = THREE.MathUtils.clamp(Math.max(distW, distD), 7, 80);
-    const target = new THREE.Vector3(0, 0.3, 0);
     const position = new THREE.Vector3(0, Math.sin(elevation) * dist, Math.cos(elevation) * dist * side).add(target);
     return { position, target };
   }
