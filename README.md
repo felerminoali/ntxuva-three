@@ -25,7 +25,7 @@ The board has 4 rows. Each player owns the two rows nearest to them: an **outer 
 2. Sow them one by one, anti-clockwise, around **your own two rows** only.
 3. **Relay sowing:** if the last seed lands in a bin that already held seeds, pick up that whole bin and keep sowing.
 4. If the last seed lands in an empty bin, the turn ends there:
-   - **Capture:** if that bin is in your inner (attacking) row and the opponent has seeds in the same column, you take all of the opponent's seeds in that column (both their attacking and back bins).
+   - **Capture:** if that bin is in your inner (attacking) row and the opponent's facing attacking bin in the same column has seeds, you take all of the opponent's seeds in that column (both their attacking and back bins). If that facing bin is empty there is no capture, even when their back bin has seeds.
    - **Optional extra bin rule** (off by default, chosen before the game: the checkbox on the Play screen, or the rule selector in the online lobby): after each capture you also take **one extra opponent bin of your choice**.
    - Otherwise, the turn simply ends.
 5. **Phase 1:** you may not play a bin holding a single seed while any of your bins holds more than one.
@@ -35,7 +35,7 @@ The board has 4 rows. Each player owns the two rows nearest to them: an **outer 
 ### Interpretations where the source rules are silent
 
 - South moves first.
-- A capture happens only when the turn ends in an empty attacking-row bin and at least one of the two opposite bins has seeds.
+- A capture happens only when the turn ends in an empty attacking-row bin and the opponent's facing attacking-row bin has seeds.
 - With the extra bin rule, the extra bin may be any non-empty opponent bin. If only one exists it is taken automatically; if none exist there is no extra capture.
 - During a long sowing lap, seeds are also dropped into the bin that was just emptied.
 - A player who still has seeds but no legal move loses.

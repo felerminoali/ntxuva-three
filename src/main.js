@@ -80,6 +80,14 @@ document.getElementById('btn-online').addEventListener('click', () => {
   audio.unlock();
   online.open();
 });
+document.getElementById('menu-profile').addEventListener('click', () => {
+  audio.unlock();
+  online.open();
+});
+document.getElementById('menu-coins').addEventListener('click', () => {
+  audio.unlock();
+  online.openStore();
+});
 
 function applySettings(changes = {}, initial = false) {
   const before = settings;
@@ -138,6 +146,8 @@ stage.renderer.setAnimationLoop((now) => {
 
 ui.hideLoading();
 ui.show('menu');
+online.renderMenuBar();
+online.autoResume();
 
 // Exposed for debugging and automated smoke tests.
 window.__ntuxa = { session, stage, board, pieces, ui, online, audio, get settings() { return settings; } };

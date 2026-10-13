@@ -14,67 +14,108 @@
     <div id="loading" class="loading" data-i18n="app.loading">Carving the board…</div>
 
     <!-- Main menu -->
-    <section id="screen-menu" class="screen" hidden>
-      <div class="panel menu-panel">
-        <div class="pattern-band" aria-hidden="true"></div>
-        <h1 class="title">Ntuxa</h1>
-        <p class="subtitle" data-i18n="menu.subtitle">Ntxuva · the four-row mancala of Mozambique</p>
-        <nav class="menu-buttons">
-          <button class="btn primary" data-nav="play" data-i18n="menu.play">Play</button>
-          <button class="btn" data-nav="rules" data-i18n="menu.rules">Learn the Rules</button>
-          <button class="btn" data-nav="settings" data-i18n="menu.settings">Settings</button>
-          <button class="btn" data-nav="about" data-i18n="menu.about">About</button>
+    <section id="screen-menu" class="screen lobby-screen" hidden>
+      <div class="lobby">
+        <header class="lobby-bar">
+          <button class="lb-profile" id="menu-profile" aria-label="Profile">
+            <span class="lb-avatar" id="menu-avatar">?</span>
+            <span class="lb-who">
+              <span class="lb-name" id="menu-name" data-i18n="menu.guest">Guest</span>
+              <span class="lb-sub" id="menu-sub" data-i18n="menu.signinHint">Sign in to play online</span>
+            </span>
+            <span class="lb-level" id="menu-level" hidden>1</span>
+          </button>
+          <button class="lb-coins" id="menu-coins" hidden aria-label="Coins" data-i18n-aria="account.store">
+            <span class="coin" aria-hidden="true"></span><b id="menu-coins-n">0</b><span class="lb-plus" aria-hidden="true">+</span>
+          </button>
+          <button class="sq-btn" data-nav="settings" title="Settings" data-i18n-title="menu.settings" data-i18n-aria="menu.settings" aria-label="Settings">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3.2" /><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1" /></svg>
+          </button>
+        </header>
+
+        <div class="lobby-logo">
+          <h1 class="title">Ntuxa</h1>
+          <p class="subtitle" data-i18n="menu.subtitle">Ntxuva · the four-row mancala of Mozambique</p>
+        </div>
+
+        <nav class="tiles" aria-label="Game modes">
+          <button class="tile green" id="btn-online">
+            <svg class="tile-art" viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="22" /><path d="M10 32h44M32 10c8 7 8 37 0 44M32 10c-8 7-8 37 0 44" /></svg>
+            <span class="tile-title" data-i18n="tile.online">Play online</span>
+            <span class="tile-sub" data-i18n="tile.onlineSub">1 on 1 · win coins</span>
+          </button>
+          <button class="tile blue" data-setup="ai">
+            <svg class="tile-art" viewBox="0 0 64 64" aria-hidden="true"><rect x="14" y="20" width="36" height="28" rx="6" /><path d="M32 12v8M24 32h.01M40 32h.01M25 41h14" /></svg>
+            <span class="tile-title" data-i18n="tile.ai">vs Computer</span>
+            <span class="tile-sub" data-i18n="tile.aiSub">Easy · Medium · Hard</span>
+          </button>
+          <button class="tile purple" data-setup="local">
+            <svg class="tile-art" viewBox="0 0 64 64" aria-hidden="true"><circle cx="22" cy="24" r="7" /><circle cx="42" cy="24" r="7" /><path d="M10 50c1-9 6-13 12-13s11 4 12 13M30 50c1-9 6-13 12-13s11 4 12 13" /></svg>
+            <span class="tile-title" data-i18n="tile.local">2 Players</span>
+            <span class="tile-sub" data-i18n="tile.localSub">Same device</span>
+          </button>
+          <button class="tile orange" data-setup="practice">
+            <svg class="tile-art" viewBox="0 0 64 64" aria-hidden="true"><path d="M32 10a14 14 0 0 0-8 25.5V42h16v-6.5A14 14 0 0 0 32 10zM26 48h12M28 54h8" /></svg>
+            <span class="tile-title" data-i18n="tile.practice">Practice</span>
+            <span class="tile-sub" data-i18n="tile.practiceSub">Hints &amp; undo</span>
+          </button>
+          <button class="tile red" data-start="tutorial">
+            <svg class="tile-art" viewBox="0 0 64 64" aria-hidden="true"><path d="M8 24l24-11 24 11-24 11zM18 29v12c8 6 20 6 28 0V29M56 24v14" /></svg>
+            <span class="tile-title" data-i18n="tile.tutorial">Tutorial</span>
+            <span class="tile-sub" data-i18n="tile.tutorialSub">Learn step by step</span>
+          </button>
         </nav>
-        <div class="pattern-band" aria-hidden="true"></div>
+
+        <footer class="lobby-foot">
+          <button class="sq-btn labeled" data-nav="rules">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5C6.5 4 9.5 4 12 6c2.5-2 5.5-2 8-.5V19c-2.5-1.5-5.5-1.5-8 .5-2.5-2-5.5-2-8-.5zM12 6v13.5" /></svg>
+            <span data-i18n="menu.rulesShort">Rules</span>
+          </button>
+          <button class="sq-btn labeled" data-nav="about">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M12 11v6M12 7.5h.01" /></svg>
+            <span data-i18n="menu.about">About</span>
+          </button>
+        </footer>
       </div>
     </section>
 
-    <!-- Mode selection -->
-    <section id="screen-play" class="screen" hidden>
-      <div class="panel wide">
-        <h2 data-i18n="play.title">Choose a game</h2>
-        <div class="mode-grid">
-          <article class="mode-card online-card">
-            <h3 data-i18n="online.mode">Play online</h3>
-            <p data-i18n="online.modeDesc">Find an opponent on the internet and stake coins in rooms across Mozambique.</p>
-            <button class="btn primary" id="btn-online" data-i18n="online.join">Play</button>
-          </article>
-          <article class="mode-card">
-            <h3 data-i18n="play.local">Two players</h3>
-            <p data-i18n="play.localDesc">Take turns on the same device. South starts.</p>
-            <button class="btn primary" data-start="local" data-i18n="common.start">Start</button>
-          </article>
-          <article class="mode-card">
-            <h3 data-i18n="play.ai">Against the computer</h3>
-            <label><span data-i18n="play.difficulty">Difficulty</span>
-              <select id="opt-difficulty">
-                <option value="easy" data-i18n="play.easy">Easy</option>
-                <option value="medium" data-i18n="play.medium">Medium</option>
-                <option value="hard" data-i18n="play.hard">Hard</option>
-              </select>
-            </label>
-            <label><span data-i18n="play.youPlay">You play</span>
-              <select id="opt-side">
-                <option value="0" data-i18n="play.sideSouth">South (moves first)</option>
-                <option value="1" data-i18n="play.sideNorth">North (moves second)</option>
-              </select>
-            </label>
-            <button class="btn primary" data-start="ai" data-i18n="common.start">Start</button>
-          </article>
-          <article class="mode-card">
-            <h3 data-i18n="play.practice">Practice</h3>
-            <p data-i18n="play.practiceDesc">Control both sides, preview every move and ask for hints. Undo freely.</p>
-            <button class="btn primary" data-start="practice" data-i18n="common.start">Start</button>
-          </article>
-          <article class="mode-card">
-            <h3 data-i18n="play.tutorial">Tutorial</h3>
-            <p data-i18n="play.tutorialDesc">A guided, hands-on lesson on sowing, relays, captures and the endgame.</p>
-            <button class="btn primary" data-start="tutorial" data-i18n="common.start">Start</button>
-          </article>
+    <!-- Game setup (for the AI, two-player and practice tiles) -->
+    <section id="screen-play" class="screen dim" hidden>
+      <div class="panel sheet">
+        <h2 id="setup-title">vs Computer</h2>
+        <p class="note" id="setup-desc"></p>
+        <div class="setup-ai" id="setup-ai">
+          <div class="seg" role="radiogroup" aria-label="Difficulty" data-i18n-aria="play.difficulty">
+            <span class="seg-label" data-i18n="play.difficulty">Difficulty</span>
+            <div class="seg-row" id="seg-difficulty">
+              <button type="button" role="radio" data-value="easy" data-i18n="play.easy">Easy</button>
+              <button type="button" role="radio" data-value="medium" data-i18n="play.medium">Medium</button>
+              <button type="button" role="radio" data-value="hard" data-i18n="play.hard">Hard</button>
+            </div>
+          </div>
+          <div class="seg" role="radiogroup" aria-label="You play" data-i18n-aria="play.youPlay">
+            <span class="seg-label" data-i18n="play.youPlay">You play</span>
+            <div class="seg-row" id="seg-side">
+              <button type="button" role="radio" data-value="0" data-i18n="play.sideSouthShort">South (first)</button>
+              <button type="button" role="radio" data-value="1" data-i18n="play.sideNorthShort">North (second)</button>
+            </div>
+          </div>
+          <select id="opt-difficulty" hidden>
+            <option value="easy">Easy</option>
+            <option value="medium">Medium</option>
+            <option value="hard">Hard</option>
+          </select>
+          <select id="opt-side" hidden>
+            <option value="0">South</option>
+            <option value="1">North</option>
+          </select>
         </div>
         <label class="toggle rule-option"><input type="checkbox" id="opt-extra" /> <span data-i18n="rule.extraCapture">Extra bin rule: after a capture, also take one opponent bin of your choice</span></label>
         <p class="note"><span data-i18n="play.boardSize">Board size:</span> <span id="board-size-note">4 × 16</span> <span data-i18n="play.boardSizeHint">(change it in Settings).</span></p>
-        <button class="btn ghost" data-back data-i18n="common.back">Back</button>
+        <div class="sheet-actions">
+          <button class="btn back" data-back aria-label="Back" data-i18n-aria="common.back"></button>
+          <button class="btn primary big" id="setup-start" data-i18n="tile.play">Play</button>
+        </div>
       </div>
     </section>
 
@@ -96,10 +137,11 @@
               sowing (a <b>relay</b>). If it lands in an <b>empty</b> bin, the sowing ends.</li>
           </ol>
           <h3>Capturing</h3>
-          <p>When the sowing ends in an empty bin of your <b>attacking row</b> and your opponent has seeds in the same
-            column, you capture all of their seeds in that column (both their attacking and back bins).
-            Captured seeds are removed from the game.
-            Ending in your back row, or opposite an empty column, simply ends your turn.</p>
+          <p>When the sowing ends in an empty bin of your <b>attacking row</b> and the facing bin in your opponent's
+            <b>attacking row</b> (same column) has seeds, you capture all of their seeds in that column (both their
+            attacking and back bins). Captured seeds are removed from the game.
+            Ending in your back row, or facing an empty attacking bin, simply ends your turn, even if their back bin
+            has seeds.</p>
           <p><b>Optional extra bin rule:</b> before a game you may choose to also take <b>one extra bin of your
             choice</b> from the opponent's side after every capture. Online, both players must pick the same rule.</p>
           <h3>Two phases</h3>
@@ -249,68 +291,93 @@
 
     <!-- Online: lobby -->
     <section id="screen-online" class="screen" hidden>
-      <div class="panel wide scroll">
+      <div class="panel wide scroll lobby-panel">
         <div class="profile-card">
-          <div class="avatar" id="profile-avatar" aria-hidden="true"></div>
+          <div class="avatar-frame">
+            <div class="avatar" id="profile-avatar" aria-hidden="true"></div>
+            <span class="level-star" id="profile-level-n" aria-hidden="true">1</span>
+          </div>
           <div class="profile-main">
             <div class="profile-name"><span id="profile-name"></span> <span class="fb-badge" id="profile-fb" hidden title="Facebook">f</span></div>
             <div class="profile-level"><span id="profile-level"></span><span class="xp-bar"><span id="profile-xp"></span></span></div>
             <div class="profile-record" id="profile-record"></div>
           </div>
-          <div class="coin-box"><span class="coin" aria-hidden="true"></span><b id="profile-coins">0</b></div>
+          <button class="coin-box" id="online-store" title="Get coins" data-i18n-title="account.store">
+            <span class="coin" aria-hidden="true"></span><b id="profile-coins">0</b><span class="lb-plus" aria-hidden="true">+</span>
+          </button>
         </div>
-        <div class="row wrap account-actions">
-          <button class="btn small primary" id="online-bonus"></button>
-          <button class="btn small" id="online-store" data-i18n="account.store">Get coins</button>
-          <button class="btn small" id="online-leaderboard" data-i18n="account.leaderboard">Leaderboard</button>
-          <button class="btn small" id="online-rename" data-i18n="account.rename">Rename</button>
-          <button class="btn small fb" id="online-facebook"><span class="fb-logo" aria-hidden="true">f</span> <span data-i18n="account.facebookConnect">Connect Facebook</span></button>
-          <button class="btn small ghost" id="online-signout" data-i18n="account.signout">Sign out</button>
+        <div class="chip-row account-actions">
+          <button class="chip gift" id="online-bonus"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11h16v9H4zM3 7h18v4H3zM12 7v13M12 7c-2-4-6-4-6-1.5S10 7 12 7zm0 0c2-4 6-4 6-1.5S14 7 12 7z" /></svg><span id="online-bonus-text"></span></button>
+          <button class="chip" id="online-leaderboard"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4h8v5a4 4 0 0 1-8 0zM8 6H4.5c0 3 1.5 4.5 3.7 4.8M16 6h3.5c0 3-1.5 4.5-3.7 4.8M12 13v4M8 20h8l-1-3H9z" /></svg><span data-i18n="account.leaderboard">Leaderboard</span></button>
+          <button class="chip" id="online-rename"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16zM13.5 6.5l4 4" /></svg><span data-i18n="account.rename">Rename</span></button>
+          <button class="chip fb" id="online-facebook"><span class="fb-logo" aria-hidden="true">f</span> <span data-i18n="account.facebookConnect">Connect Facebook</span></button>
+          <button class="chip ghost" id="online-signout"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 4H5v16h5M14 8l4 4-4 4M18 12H9" /></svg><span data-i18n="account.signout">Sign out</span></button>
         </div>
         <fieldset class="capture-choice">
           <legend data-i18n="online.captureRule">Capture rule for this game</legend>
-          <label class="toggle"><input type="radio" name="online-rule" value="column" checked /> <span data-i18n="online.captureColumn">Column only (standard)</span></label>
-          <label class="toggle"><input type="radio" name="online-rule" value="extra" /> <span data-i18n="online.captureExtra">Column + one extra bin of my choice</span></label>
+          <div class="seg-row">
+            <label class="seg-opt"><input type="radio" name="online-rule" value="column" checked /> <span data-i18n="online.captureColumn">Column only (standard)</span></label>
+            <label class="seg-opt"><input type="radio" name="online-rule" value="extra" /> <span data-i18n="online.captureExtra">Column + one extra bin of my choice</span></label>
+          </div>
           <p class="note" data-i18n="online.captureNote">You are only matched with players who chose the same rule.</p>
         </fieldset>
         <div class="lobby-head">
           <h2 data-i18n="online.title">Online rooms</h2>
-          <span class="note" id="online-count"></span>
+          <span class="online-pill" id="online-count"></span>
         </div>
         <p class="status-line" id="online-status" aria-live="polite"></p>
-        <ol class="tier-list" id="tier-list"></ol>
-        <button class="btn ghost" data-back data-i18n="common.back">Back</button>
+        <div class="carousel">
+          <button class="car-arrow prev" id="tier-prev" aria-label="Previous room" data-i18n-aria="online.prevRoom">‹</button>
+          <ol class="tier-list" id="tier-list"></ol>
+          <button class="car-arrow next" id="tier-next" aria-label="Next room" data-i18n-aria="online.nextRoom">›</button>
+        </div>
+        <div class="sheet-actions start">
+          <button class="btn back" data-back aria-label="Back" data-i18n-aria="common.back"></button>
+        </div>
       </div>
     </section>
 
     <!-- Online: searching -->
     <section id="screen-searching" class="screen dim" hidden>
-      <div class="panel">
-        <div class="pattern-band" aria-hidden="true"></div>
-        <h2><span data-i18n="online.searching">Looking for an opponent</span><span class="dots" aria-hidden="true"></span></h2>
+      <div class="panel sheet">
+        <div class="room-banner" id="searching-place"></div>
+        <div class="versus">
+          <div class="vs-player">
+            <div class="vs-frame"><span class="avatar" id="searching-me"></span></div>
+            <div class="vs-name" id="searching-me-name"></div>
+          </div>
+          <div class="vs-mid">VS</div>
+          <div class="vs-player">
+            <div class="vs-frame unknown"><span class="avatar">?</span></div>
+            <div class="vs-name"><span data-i18n="online.searching">Looking for an opponent</span><span class="dots" aria-hidden="true"></span></div>
+          </div>
+        </div>
         <p id="searching-room"></p>
         <p class="note" id="searching-rule"></p>
-        <div class="spinner" aria-hidden="true"></div>
-        <button class="btn ghost" id="searching-cancel" data-i18n="online.cancel">Cancel</button>
+        <button class="btn danger" id="searching-cancel" data-i18n="online.cancel">Cancel</button>
       </div>
     </section>
 
     <!-- Online: store -->
     <section id="screen-store" class="screen" hidden>
       <div class="panel wide scroll">
-        <h2 data-i18n="store.title">Coin store</h2>
+        <h2 class="ribbon-title" data-i18n="store.title">Coin store</h2>
         <p class="note warn" data-i18n="store.note">Demo store: coins are free and purely virtual.</p>
         <div class="store-grid" id="store-grid"></div>
-        <button class="btn ghost" data-back data-i18n="common.back">Back</button>
+        <div class="sheet-actions start">
+          <button class="btn back" data-back aria-label="Back" data-i18n-aria="common.back"></button>
+        </div>
       </div>
     </section>
 
     <!-- Online: leaderboard -->
     <section id="screen-leaderboard" class="screen" hidden>
       <div class="panel wide scroll">
-        <h2 data-i18n="leaderboard.title">Richest players</h2>
+        <h2 class="ribbon-title" data-i18n="leaderboard.title">Richest players</h2>
         <ol class="leaderboard" id="leaderboard-list"></ol>
-        <button class="btn ghost" data-back data-i18n="common.back">Back</button>
+        <div class="sheet-actions start">
+          <button class="btn back" data-back aria-label="Back" data-i18n-aria="common.back"></button>
+        </div>
       </div>
     </section>
 
@@ -429,15 +496,31 @@
 
     <!-- End of game -->
     <section id="screen-end" class="screen dim" hidden>
-      <div class="panel">
-        <div class="pattern-band" aria-hidden="true"></div>
+      <div class="panel sheet end-sheet">
+        <div class="room-banner" id="end-place" hidden></div>
         <h2 id="end-title">South wins!</h2>
+        <div class="versus" id="end-versus">
+          <div class="vs-player" id="end-p0">
+            <div class="vs-winner" data-i18n="end.winner">Winner</div>
+            <div class="vs-frame"><span class="avatar" id="end-face-0"></span></div>
+            <div class="vs-name" id="end-name-0"></div>
+            <div class="vs-score"><b id="end-caps-0">0</b> <span data-i18n="hud.captured">captured</span></div>
+          </div>
+          <div class="vs-mid">VS</div>
+          <div class="vs-player" id="end-p1">
+            <div class="vs-winner" data-i18n="end.winner">Winner</div>
+            <div class="vs-frame"><span class="avatar" id="end-face-1"></span></div>
+            <div class="vs-name" id="end-name-1"></div>
+            <div class="vs-score"><b id="end-caps-1">0</b> <span data-i18n="hud.captured">captured</span></div>
+          </div>
+        </div>
+        <div class="end-prize" id="end-prize" hidden></div>
         <p id="end-detail"></p>
-        <nav class="menu-buttons">
-          <button class="btn primary" id="end-again">Play again</button>
-          <button class="btn" id="end-view" data-i18n="end.viewBoard">View the board</button>
-          <button class="btn ghost" id="end-menu" data-i18n="common.mainMenu">Main menu</button>
-        </nav>
+        <div class="sheet-actions">
+          <button class="btn back" id="end-menu" aria-label="Main menu" data-i18n-aria="common.mainMenu" data-i18n-title="common.mainMenu" title="Main menu"></button>
+          <button class="btn blue" id="end-view" data-i18n="end.viewBoard">View the board</button>
+          <button class="btn primary big" id="end-again">Play again</button>
+        </div>
       </div>
     </section>
 

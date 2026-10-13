@@ -16,6 +16,24 @@ function el(tag, className, text) {
   return node;
 }
 
+function fillAvatar(node, profile) {
+  node.replaceChildren();
+  if (profile.avatar) {
+    const img = el('img');
+    img.src = profile.avatar;
+    img.alt = '';
+    img.referrerPolicy = 'no-referrer';
+    img.addEventListener('error', () => (node.textContent = initialOf(profile.name)), { once: true });
+    node.append(img);
+  } else {
+    node.textContent = initialOf(profile.name);
+  }
+}
+
+function initialOf(name) {
+  return (name || '?').trim().charAt(0).toUpperCase() || '?';
+}
+
 export class OnlineController {
   constructor({ ui, session, audio, getSettings, saveSettings, net = new NetClient() }) {
     Object.assign(this, { ui, session, audio, getSettings, saveSettings, net });
@@ -65,6 +83,7 @@ export class OnlineController {
 
   toSignin() {
     this.profile = null;
+    this.renderMenuBar();
     this.setStatus('');
     $('signin-fb-note').hidden = !!this.net.facebookAppId;
     $('signin-facebook').disabled = !this.net.facebookAppId;
@@ -156,13 +175,18 @@ export class OnlineController {
       this.ui.push('store');
     });
     $('online-leaderboard').addEventListener('click', () => this.showLeaderboard());
+    $('tier-prev').addEventListener('click', () => this.scrollTiers(-1));
+    $('tier-next').addEventListener('click', () => this.scrollTiers(1));
     $('searching-cancel').addEventListener('click', () => this.cancelSearch());
     document.querySelectorAll('input[name="online-rule"]').forEach((input) =>
       input.addEventListener('change', () => {
         this.saveSettings({ onlineExtraCapture: this.selectedExtra() });
       }),
     );
-    onLanguageChange(() => this.renderLobby());
+    onLanguageChange(() => {
+      this.renderMenuBar();
+      this.renderLobby();
+    });
     this.bonusTimer = setInterval(() => {
       if (this.ui.current === 'online') this.renderBonus();
     }, 30_000);
@@ -277,17 +301,8 @@ export class OnlineController {
   renderProfile() {
     const p = this.profile;
     if (!p) return;
-    const avatar = $('profile-avatar');
-    avatar.replaceChildren();
-    if (p.avatar) {
-      const img = el('img');
-      img.src = p.avatar;
-      img.alt = '';
-      img.referrerPolicy = 'no-referrer';
-      avatar.append(img);
-    } else {
-      avatar.textContent = (p.name || '?').trim().charAt(0).toUpperCase();
-    }
+    fillAvatar($('profile-avatar'), p);
+    $('profile-level-n').textContent = String(p.level);
     $('profile-name').textContent = p.name;
     $('profile-fb').hidden = !p.facebook;
     $('profile-level').textContent = t('account.level', { n: p.level });
@@ -298,21 +313,74 @@ export class OnlineController {
     $('profile-coins').title = `${p.coins.toLocaleString()} ${t('account.coins')}`;
     $('online-facebook').hidden = p.facebook;
     this.renderBonus();
+    this.renderMenuBar();
   }
 
   renderBonus() {
     const p = this.profile;
     if (!p) return;
     const btn = $('online-bonus');
+    const label = $('online-bonus-text');
     const wait = p.bonusAt - (Date.now() + this.net.clockOffset);
+    btn.classList.toggle('ready', wait <= 0);
     if (wait <= 0) {
       btn.disabled = false;
-      btn.textContent = t('account.dailyBonus', { coins: formatCoins(p.dailyBonus) });
+      label.textContent = t('account.dailyBonus', { coins: formatCoins(p.dailyBonus) });
     } else {
       btn.disabled = true;
       const minutes = Math.ceil(wait / 60_000);
-      btn.textContent = t('account.bonusIn', { h: Math.floor(minutes / 60), m: minutes % 60 });
+      label.textContent = t('account.bonusIn', { h: Math.floor(minutes / 60), m: minutes % 60 });
     }
+  }
+
+  /** The profile/coins strip at the top of the main menu. */
+  renderMenuBar() {
+    const p = this.profile;
+    const avatar = $('menu-avatar');
+    $('menu-coins').hidden = !p;
+    $('menu-level').hidden = !p;
+    if (!p) {
+      avatar.textContent = '?';
+      $('menu-name').textContent = t('menu.guest');
+      $('menu-sub').textContent = t('menu.signinHint');
+      return;
+    }
+    fillAvatar(avatar, p);
+    $('menu-name').textContent = p.name;
+    $('menu-sub').textContent = t('account.record', { w: p.wins, l: p.losses, r: p.rating });
+    $('menu-level').textContent = String(p.level);
+    $('menu-coins-n').textContent = formatCoins(p.coins);
+    $('menu-coins').title = `${p.coins.toLocaleString()} ${t('account.coins')}`;
+  }
+
+  /** Signs in silently at start-up when a saved session exists, so the menu shows the profile. */
+  async autoResume() {
+    if (!this.net.token) return;
+    this.wire();
+    try {
+      await this.net.connect();
+      const data = await this.net.request('auth.resume', { token: this.net.token });
+      this.onAuth(data);
+    } catch (err) {
+      if (err?.code === 'bad-token') this.net.token = null;
+    }
+  }
+
+  async openStore() {
+    if (!this.profile) {
+      await this.open();
+      return;
+    }
+    this.wire();
+    this.renderStore();
+    this.ui.push('store');
+  }
+
+  scrollTiers(dir) {
+    const list = $('tier-list');
+    const card = list.querySelector('.tier');
+    const step = card ? card.getBoundingClientRect().width + 12 : list.clientWidth * 0.8;
+    list.scrollBy({ left: dir * step, behavior: 'smooth' });
   }
 
   renderTiers() {
@@ -320,47 +388,62 @@ export class OnlineController {
     if (!p) return;
     $('online-count').textContent = t('online.playersOnline', { n: this.lobby.online ?? 0 });
     const list = $('tier-list');
+    const keepScroll = list.childElementCount > 0;
+    const scrollLeft = list.scrollLeft;
+    let best = 0;
     list.replaceChildren(
       ...TIERS.map((tier, i) => {
         const blocker = tierBlocker(tier, p);
+        if (!blocker) best = i;
         const li = el('li', `tier${blocker ? ' locked' : ''}${i >= TIERS.length - 3 ? ' capital' : ''}`);
         li.style.setProperty('--rank', String(i / (TIERS.length - 1)));
-        const info = el('div', 'tier-info');
-        info.append(el('div', 'tier-place', tier.place), el('div', 'tier-province', tier.province));
-        const stake = el('div', 'tier-stake');
-        stake.append(el('span', 'coin'), el('b', '', formatCoins(tier.stake)));
+        li.style.setProperty('--hue', String(150 - (i / (TIERS.length - 1)) * 150));
+        const banner = el('div', 'tier-banner');
+        banner.append(el('div', 'tier-place', tier.place), el('div', 'tier-province', tier.province));
+        const prize = el('div', 'tier-prize');
+        const prizeAmount = el('div', 'tier-prize-amount');
+        prizeAmount.append(el('span', 'coin'), el('b', '', formatCoins(tier.stake * 2)));
+        prize.append(el('div', 'tier-label', t('online.prize')), prizeAmount);
+        const entry = el('div', 'tier-entry');
+        entry.append(el('span', 'tier-label', t('online.entry')), el('span', 'coin'), el('b', '', formatCoins(tier.stake)));
         const meta = el('div', 'tier-meta');
-        meta.append(
-          el('span', '', `${t('online.pot')} ${formatCoins(tier.stake * 2)}`),
-          el('span', '', t('online.minLevel', { n: tier.minLevel })),
-        );
+        meta.append(el('span', '', t('online.minLevel', { n: tier.minLevel })));
         const waiting = this.lobby.waiting?.[tier.id] ?? 0;
         const playing = this.lobby.playing?.[tier.id] ?? 0;
         if (waiting) meta.append(el('span', 'live', t('online.waiting', { n: waiting })));
         if (playing) meta.append(el('span', '', t('online.playing', { n: playing })));
-        const btn = el('button', 'btn small primary');
+        const btn = el('button', 'btn primary tier-play');
         if (blocker === 'not-enough-coins') btn.textContent = t('online.locked.coins');
         else if (blocker === 'level-too-low') btn.textContent = t('online.locked.level', { n: tier.minLevel });
         else btn.textContent = t('online.join');
         btn.disabled = !!blocker;
         btn.addEventListener('click', () => this.join(tier.id, this.selectedExtra()));
-        li.append(info, stake, meta, btn);
+        li.append(banner, prize, entry, meta, btn);
         return li;
       }),
     );
+    if (keepScroll) list.scrollLeft = scrollLeft;
+    else {
+      requestAnimationFrame(() => {
+        const target = list.children[best];
+        if (target) list.scrollLeft = target.offsetLeft - (list.clientWidth - target.offsetWidth) / 2;
+      });
+    }
   }
 
   renderStore() {
     const grid = $('store-grid');
+    const ribbons = { cesto: 'store.popular', tesouro: 'store.best' };
     grid.replaceChildren(
       ...STORE_PACKS.map((pack, i) => {
-        const card = el('article', 'store-pack');
+        const card = el('article', `store-pack${ribbons[pack.id] ? ' featured' : ''}`);
         card.style.setProperty('--size', String(i));
+        if (ribbons[pack.id]) card.append(el('span', 'pack-ribbon', t(ribbons[pack.id])));
         const icon = el('div', 'pack-icon');
         for (let k = 0; k <= i; k++) icon.append(el('span', 'coin'));
-        const btn = el('button', 'btn small primary', t('store.get'));
+        const btn = el('button', 'btn primary pack-buy', t('store.get'));
         btn.addEventListener('click', () => this.buy(pack.id, btn));
-        card.append(icon, el('h3', '', t(`store.pack.${pack.id}`)), el('div', 'pack-coins', `+${formatCoins(pack.coins)}`), btn);
+        card.append(el('h3', '', t(`store.pack.${pack.id}`)), icon, el('div', 'pack-coins', formatCoins(pack.coins)), btn);
         return card;
       }),
     );
@@ -419,6 +502,9 @@ export class OnlineController {
     }
     if (result.matched) return; // match.start arrives as a push
     this.queuedTier = tierId;
+    $('searching-place').textContent = `${tier.place} · ${tier.province}`;
+    if (this.profile) fillAvatar($('searching-me'), this.profile);
+    $('searching-me-name').textContent = this.profile?.name ?? '';
     $('searching-room').textContent = t('online.searchingIn', {
       place: tier.place,
       province: tier.province,
@@ -484,7 +570,6 @@ export class OnlineController {
   backToLobby() {
     this.session.exitToMenu();
     this.ui.show('menu');
-    this.ui.push('play');
     this.ui.push('online');
     this.renderLobby();
   }

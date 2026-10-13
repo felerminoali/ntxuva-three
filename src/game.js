@@ -634,12 +634,14 @@ export class GameSession {
     } else {
       detail = t('end.moveLimit', { south: seedsOf(s, SOUTH), north: seedsOf(s, NORTH) });
     }
-    detail += `<br>${t('end.captured', { south: s.captured[SOUTH], north: s.captured[NORTH] })}`;
     if (this.mode === 'ai' && winner !== this.humanSide) this.audio.lose();
     else this.audio.win();
+    const players = [this.hudPlayer(SOUTH), this.hudPlayer(NORTH)];
     const gen = this.generation;
     setTimeout(() => {
-      if (gen === this.generation && !this.paused) this.ui.showEnd(this.resultTitle(), detail);
+      if (gen === this.generation && !this.paused) {
+        this.ui.showEnd(this.resultTitle(), detail, { players, winner, place: this.hudPlace() });
+      }
     }, 900);
   }
 
@@ -885,17 +887,25 @@ export class GameSession {
     if (msg.winner !== null && !won) this.audio.lose();
     else this.audio.win();
     let detail = t(`online.reason.${msg.reason}`);
-    if (msg.winner === null) detail += `<br>${t('online.drawRefund', { coins: msg.stake.toLocaleString() })}`;
-    else if (won) detail += `<br><b class="coin-win">${t('online.won', { coins: msg.payout.toLocaleString() })}</b>`;
-    else detail += `<br>${t('online.lost', { coins: msg.stake.toLocaleString() })}`;
+    let prize;
+    if (msg.winner === null) prize = { text: t('online.drawRefund', { coins: msg.stake.toLocaleString() }), kind: 'draw' };
+    else if (won) prize = { text: t('online.won', { coins: msg.payout.toLocaleString() }), kind: 'win' };
+    else prize = { text: t('online.lost', { coins: msg.stake.toLocaleString() }), kind: 'loss' };
     const delta = msg.ratingDelta > 0 ? `+${msg.ratingDelta}` : String(msg.ratingDelta);
     detail += `<br>${t('online.rating', { delta })} · ${t('account.coins')}: ${msg.profile.coins.toLocaleString()}`;
-    detail += `<br>${t('end.captured', { south: msg.state.captured[SOUTH], north: msg.state.captured[NORTH] })}`;
+    const players = [this.hudPlayer(SOUTH), this.hudPlayer(NORTH)];
+    for (const p of [SOUTH, NORTH]) players[p].captured = msg.state.captured[p];
     const gen = this.generation;
     setTimeout(() => {
       if (gen === this.generation && this.mode === 'online') {
         this.paused = false;
-        this.ui.showEnd(this.resultTitle(), detail, { again: this.onlineLink?.againLabel?.() });
+        this.ui.showEnd(this.resultTitle(), detail, {
+          again: this.onlineLink?.againLabel?.(),
+          players,
+          winner: msg.winner,
+          place: this.hudPlace(),
+          prize,
+        });
       }
     }, 900);
   }

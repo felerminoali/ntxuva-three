@@ -193,11 +193,24 @@ describe('captures', () => {
     expect(second.state.current).toBe(NORTH);
   });
 
-  it('captures when only one opposite bin has seeds', () => {
+  it('does not capture when the facing front pit is empty, even if the back pit has seeds', () => {
     const s = game({ 6: 3 }, { 1: 2, 5: 4, 10: 1 }, { extraCapture: true });
+    const { state, record, events } = playMove(s, 6);
+    expect(record.lastBin).toBe(9);
+    expect(record.captured).toBe(0);
+    expect(events.some((e) => e.type === 'capture')).toBe(false);
+    expect(state.status).toBe(STATUS.PLAYING);
+    expect(state.bins[NORTH][1]).toBe(2);
+    expect(state.current).toBe(NORTH);
+  });
+
+  it('captures the back pit too when the facing front pit has seeds', () => {
+    const s = game({ 6: 3 }, { 14: 1, 1: 2, 5: 4 });
     const { state, record } = playMove(s, 6);
-    expect(state.status).toBe(STATUS.CHOOSING_EXTRA);
-    expect(record.captured).toBe(2);
+    expect(record.captured).toBe(3);
+    expect(state.bins[NORTH][14]).toBe(0);
+    expect(state.bins[NORTH][1]).toBe(0);
+    expect(state.bins[NORTH][5]).toBe(4);
   });
 
   it('takes the only remaining bin automatically as the extra bin', () => {

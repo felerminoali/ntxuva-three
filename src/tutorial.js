@@ -83,15 +83,17 @@ export const TUTORIAL_STEPS = [
     title: 'Capturing',
     pt: {
       title: 'Capturar',
-      body: `<p>Se a sua vez terminar numa <b>casa vazia da sua fila de ataque</b> e o adversário tiver sementes na
-        mesma coluna, captura <b>as duas</b> casas dele nessa coluna.</p>
+      body: `<p>Se a sua vez terminar numa <b>casa vazia da sua fila de ataque</b> e a casa de ataque do adversário
+        <b>mesmo em frente</b> tiver sementes, captura <b>as duas</b> casas dele nessa coluna. Se essa casa da frente
+        estiver vazia, não captura nada.</p>
         <p>Com a <b>regra opcional da casa extra</b> (escolhida antes do início do jogo) leva também <b>uma casa extra
         à sua escolha</b> de qualquer ponto do lado dele. Este passo usa essa opção.</p>
         <p><b>Experimente:</b> jogue a casa destacada e depois clique numa casa com anel vermelho para a levar como extra.</p>`,
       done: 'As sementes capturadas saem do jogo; vão para a sua cabaça.',
     },
-    body: `<p>If your turn ends in an <b>empty bin in your attacking row</b>, and your opponent has seeds in
-      the same column, you capture <b>both</b> of their bins in that column.</p>
+    body: `<p>If your turn ends in an <b>empty bin in your attacking row</b>, and the opponent's attacking bin
+      <b>directly facing it</b> has seeds, you capture <b>both</b> of their bins in that column. If that facing
+      bin is empty, nothing is captured.</p>
       <p>With the optional <b>extra bin rule</b> (chosen before the game starts) you also take <b>one extra bin of
       your choice</b> from anywhere on their side. This step uses that option.</p>
       <p><b>Try it:</b> play the highlighted bin, then click a red-ringed bin to take as your extra.</p>`,

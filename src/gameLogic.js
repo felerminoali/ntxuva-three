@@ -332,8 +332,11 @@ export function playMove(state, bin) {
   }
   record.lastBin = pos;
 
-  if (!record.loopLimited && isAttackingBin(columns, pos)) {
-    const opponent = 1 - player;
+  const opponent = 1 - player;
+  const [frontBin] = oppositeBins(columns, player, pos);
+  // A capture needs seeds in the opponent's front (attacking) pit directly facing the
+  // last bin; seeds only in their back pit are safe.
+  if (!record.loopLimited && isAttackingBin(columns, pos) && s.bins[opponent][frontBin] > 0) {
     const taken = [];
     for (const b of oppositeBins(columns, player, pos)) {
       const n = s.bins[opponent][b];

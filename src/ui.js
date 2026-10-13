@@ -19,14 +19,25 @@ export class UI {
     );
     document.querySelectorAll('[data-back]').forEach((btn) => btn.addEventListener('click', () => this.back()));
     document.querySelectorAll('[data-start]').forEach((btn) =>
-      btn.addEventListener('click', () => {
-        const mode = btn.dataset.start;
-        this.h.onStart(mode, {
-          difficulty: $('opt-difficulty').value,
-          humanSide: Number($('opt-side').value),
-        });
-      }),
+      btn.addEventListener('click', () => this.startMode(btn.dataset.start)),
     );
+    document.querySelectorAll('[data-setup]').forEach((btn) =>
+      btn.addEventListener('click', () => this.openSetup(btn.dataset.setup)),
+    );
+    $('setup-start').addEventListener('click', () => this.startMode(this.setupMode ?? 'ai'));
+    for (const [segId, selectId] of [
+      ['seg-difficulty', 'opt-difficulty'],
+      ['seg-side', 'opt-side'],
+    ]) {
+      $(segId).addEventListener('click', (e) => {
+        const btn = e.target.closest('button[data-value]');
+        if (!btn) return;
+        const select = $(selectId);
+        select.value = btn.dataset.value;
+        select.dispatchEvent(new Event('change'));
+        this.syncSegments();
+      });
+    }
     $('opt-difficulty').addEventListener('change', (e) => this.h.onSettingsChange({ difficulty: e.target.value }));
     $('opt-side').addEventListener('change', (e) => this.h.onSettingsChange({ humanSide: Number(e.target.value) }));
     $('opt-extra').addEventListener('change', (e) => this.h.onSettingsChange({ extraCapture: e.target.checked }));
@@ -115,6 +126,37 @@ export class UI {
     $('loading').hidden = true;
   }
 
+  startMode(mode) {
+    this.h.onStart(mode, {
+      difficulty: $('opt-difficulty').value,
+      humanSide: Number($('opt-side').value),
+    });
+  }
+
+  /** Opens the setup sheet for an offline mode tile. */
+  openSetup(mode) {
+    this.setupMode = mode;
+    $('setup-title').textContent = t(`play.${mode}`);
+    $('setup-desc').textContent = t(`setup.${mode}Desc`);
+    $('setup-ai').hidden = mode !== 'ai';
+    this.syncSegments();
+    this.push('play');
+  }
+
+  syncSegments() {
+    for (const [segId, selectId] of [
+      ['seg-difficulty', 'opt-difficulty'],
+      ['seg-side', 'opt-side'],
+    ]) {
+      const value = $(selectId).value;
+      for (const btn of $(segId).querySelectorAll('button[data-value]')) {
+        const on = btn.dataset.value === value;
+        btn.classList.toggle('on', on);
+        btn.setAttribute('aria-checked', String(on));
+      }
+    }
+  }
+
   // --- Settings -----------------------------------------------------------------------
 
   setSettingsForm(settings) {
@@ -128,6 +170,7 @@ export class UI {
     $('opt-side').value = String(settings.humanSide);
     $('opt-extra').checked = !!settings.extraCapture;
     $('board-size-note').textContent = `4 × ${settings.columns}`;
+    this.syncSegments();
   }
 
   readSettingsForm() {
@@ -321,10 +364,33 @@ export class UI {
     }, ms);
   }
 
-  showEnd(title, detail, { again } = {}) {
+  /**
+   * @param {string} title
+   * @param {string} detail HTML
+   * @param {{again?: string, players?: Array<{name:string, initial:string, avatar?:string, captured:number}>,
+   *   winner?: number|null, place?: string, prize?: {text:string, kind:'win'|'loss'|'draw'}}} [opts]
+   */
+  showEnd(title, detail, { again, players, winner = null, place, prize } = {}) {
     $('end-title').textContent = title;
     $('end-detail').innerHTML = detail;
     $('end-again').textContent = again ?? t('end.playAgain');
+    $('end-versus').hidden = !players;
+    if (players) {
+      for (const p of [0, 1]) {
+        const info = players[p];
+        this.setFace($(`end-face-${p}`), info);
+        $(`end-name-${p}`).textContent = info.name;
+        $(`end-caps-${p}`).textContent = info.captured;
+        $(`end-p${p}`).classList.toggle('won', winner === p);
+        $(`end-p${p}`).classList.toggle('lost', winner !== null && winner !== p);
+      }
+    }
+    $('end-place').hidden = !place;
+    $('end-place').textContent = place ?? '';
+    const prizeEl = $('end-prize');
+    prizeEl.hidden = !prize;
+    prizeEl.className = `end-prize ${prize?.kind ?? ''}`;
+    prizeEl.textContent = prize?.text ?? '';
     this.show('end');
   }
 

@@ -169,6 +169,34 @@ const en = {
   'play.tutorialDesc': 'A guided, hands-on lesson on sowing, relays, captures and the endgame.',
   'play.boardSize': 'Board size:',
   'play.boardSizeHint': '(change it in Settings).',
+  'play.sideSouthShort': 'South · 1st',
+  'play.sideNorthShort': 'North · 2nd',
+
+  // Lobby tiles and setup sheet
+  'menu.guest': 'Guest',
+  'menu.signinHint': 'Tap to sign in',
+  'menu.rulesShort': 'Rules',
+  'tile.online': 'Play online',
+  'tile.onlineSub': '1 on 1 · win coins',
+  'tile.ai': 'vs Computer',
+  'tile.aiSub': 'Easy · Medium · Hard',
+  'tile.local': '2 Players',
+  'tile.localSub': 'Same device',
+  'tile.practice': 'Practice',
+  'tile.practiceSub': 'Hints & undo',
+  'tile.tutorial': 'Tutorial',
+  'tile.tutorialSub': 'Learn step by step',
+  'tile.play': 'Play',
+  'setup.aiDesc': 'Challenge the computer. Hard looks several moves ahead.',
+  'setup.localDesc': 'Take turns on the same device. South starts.',
+  'setup.practiceDesc': 'Control both sides, preview every move and ask for hints. Undo freely.',
+  'end.winner': 'Winner',
+  'store.popular': 'Popular',
+  'store.best': 'Best value',
+  'online.prize': 'Prize',
+  'online.entry': 'Entry',
+  'online.prevRoom': 'Previous room',
+  'online.nextRoom': 'Next room',
 
   // Rules
   'rules.title': 'How to play Ntuxa',
@@ -187,10 +215,11 @@ const en = {
               sowing (a <b>relay</b>). If it lands in an <b>empty</b> bin, the sowing ends.</li>
           </ol>
           <h3>Capturing</h3>
-          <p>When the sowing ends in an empty bin of your <b>attacking row</b> and your opponent has seeds in the same
-            column, you capture all of their seeds in that column (both their attacking and back bins).
-            Captured seeds are removed from the game.
-            Ending in your back row, or opposite an empty column, simply ends your turn.</p>
+          <p>When the sowing ends in an empty bin of your <b>attacking row</b> and the facing bin in your opponent's
+            <b>attacking row</b> (same column) has seeds, you capture all of their seeds in that column (both their
+            attacking and back bins). Captured seeds are removed from the game.
+            Ending in your back row, or facing an empty attacking bin, simply ends your turn, even if their back bin
+            has seeds.</p>
           <p><b>Optional extra bin rule:</b> before a game you may choose to also take <b>one extra bin of your
             choice</b> from the opponent's side after every capture. Online, both players must pick the same rule.</p>
           <h3>Two phases</h3>
@@ -537,6 +566,33 @@ const pt = {
   'play.tutorialDesc': 'Uma lição guiada e prática sobre semear, continuar a semear, capturar e o fim do jogo.',
   'play.boardSize': 'Tamanho do tabuleiro:',
   'play.boardSizeHint': '(altere-o nas Definições).',
+  'play.sideSouthShort': 'Sul · 1.º',
+  'play.sideNorthShort': 'Norte · 2.º',
+
+  'menu.guest': 'Convidado',
+  'menu.signinHint': 'Toque para entrar',
+  'menu.rulesShort': 'Regras',
+  'tile.online': 'Jogar online',
+  'tile.onlineSub': '1 contra 1 · ganhe moedas',
+  'tile.ai': 'vs Computador',
+  'tile.aiSub': 'Fácil · Média · Difícil',
+  'tile.local': '2 Jogadores',
+  'tile.localSub': 'Mesmo dispositivo',
+  'tile.practice': 'Prática',
+  'tile.practiceSub': 'Dicas e desfazer',
+  'tile.tutorial': 'Tutorial',
+  'tile.tutorialSub': 'Aprenda passo a passo',
+  'tile.play': 'Jogar',
+  'setup.aiDesc': 'Desafie o computador. O nível Difícil pensa várias jogadas à frente.',
+  'setup.localDesc': 'Dois jogadores jogam à vez no mesmo dispositivo. O Sul começa.',
+  'setup.practiceDesc': 'Controle os dois lados, veja a antevisão de cada jogada e peça dicas. Desfaça à vontade.',
+  'end.winner': 'Vencedor',
+  'store.popular': 'Popular',
+  'store.best': 'Melhor valor',
+  'online.prize': 'Prémio',
+  'online.entry': 'Entrada',
+  'online.prevRoom': 'Sala anterior',
+  'online.nextRoom': 'Sala seguinte',
 
   'rules.title': 'Como jogar Ntuxa',
   'rules.startTutorial': 'Começar o tutorial interativo',
@@ -554,10 +610,11 @@ const pt = {
               a semear (uma <b>continuação</b>). Se cair numa casa <b>vazia</b>, a sementeira termina.</li>
           </ol>
           <h3>Capturar</h3>
-          <p>Quando a sementeira termina numa casa vazia da sua <b>fila de ataque</b> e o adversário tem sementes na mesma
-            coluna, captura todas as sementes dele nessa coluna (tanto da casa de ataque como da casa de trás).
-            As sementes capturadas saem do jogo.
-            Terminar na fila de trás, ou em frente a uma coluna vazia, apenas encerra a sua vez.</p>
+          <p>Quando a sementeira termina numa casa vazia da sua <b>fila de ataque</b> e a casa em frente, na <b>fila de
+            ataque</b> do adversário (mesma coluna), tem sementes, captura todas as sementes dele nessa coluna (tanto
+            da casa de ataque como da casa de trás). As sementes capturadas saem do jogo.
+            Terminar na fila de trás, ou em frente a uma casa de ataque vazia, apenas encerra a sua vez, mesmo que a
+            casa de trás dele tenha sementes.</p>
           <p><b>Regra opcional da casa extra:</b> antes do jogo pode escolher levar também <b>uma casa extra à sua
             escolha</b> do lado do adversário após cada captura. Online, os dois jogadores têm de escolher a mesma regra.</p>
           <h3>Duas fases</h3>
