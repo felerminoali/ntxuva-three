@@ -8,12 +8,25 @@ import { COMPETITIONS, COMPETITION_BY_ID, MAX_SKILL, competitionBlocker, makeBot
 import { DeviceCareer, LocalCompetition } from './arenaLocal.js';
 import { formatCoins } from './tiers.js';
 import { onLanguageChange, t } from './i18n.js';
+import { DEFAULT_OPTIONS, SUPPORTED_COLUMNS } from './gameLogic.js';
 
 const $ = (id) => document.getElementById(id);
 const AVATAR_SIZE = 96;
 const AVATAR_MAX = 12_000;
 const DRAW_CARDS = 30;
 const DRAW_WINNER = 25;
+
+const envMs = (value, fallback) => {
+  const n = Number(value);
+  return value === undefined || value === '' || !Number.isFinite(n) || n < 0 ? fallback : Math.trunc(n);
+};
+/** How long the drawn opponent stays on screen after the roulette stops (Vite env `VITE_DRAW_WAIT_MS`). */
+export const DRAW_WAIT_MS = envMs(import.meta.env?.VITE_DRAW_WAIT_MS, 1500);
+
+const reducedMotion = () => !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+const drawSpinMs = () => (reducedMotion() ? 600 : 2800);
+/** The computer waits until the draw screen has closed before its first move. */
+const introMs = () => drawSpinMs() + 60 + DRAW_WAIT_MS + 300;
 
 function el(tag, className, text) {
   const node = document.createElement(tag);
@@ -90,6 +103,11 @@ export class ArenaController {
     document.querySelectorAll('input[name="arena-rule"]').forEach((input) =>
       input.addEventListener('change', () => this.saveSettings({ arenaExtraCapture: this.selectedExtra() })),
     );
+    // Shares the board size with Settings, so friendly games use it too.
+    $('arena-columns').addEventListener('change', () => {
+      this.saveSettings({ columns: this.selectedColumns() });
+      this.ui.setSettingsForm?.(this.getSettings());
+    });
     onLanguageChange(() => {
       if (this.ui.current === 'arena') this.render();
     });
@@ -112,6 +130,11 @@ export class ArenaController {
     return document.querySelector('input[name="arena-rule"]:checked')?.value === 'extra';
   }
 
+  selectedColumns() {
+    const n = Number($('arena-columns').value);
+    return SUPPORTED_COLUMNS.includes(n) ? n : DEFAULT_OPTIONS.columns;
+  }
+
   open() {
     this.audio.unlock();
     if (this.ui.current !== 'arena') this.ui.push('arena');
@@ -127,6 +150,8 @@ export class ArenaController {
     const rule = this.getSettings().arenaExtraCapture ? 'extra' : 'column';
     const radio = document.querySelector(`input[name="arena-rule"][value="${rule}"]`);
     if (radio) radio.checked = true;
+    const columns = this.getSettings().columns;
+    $('arena-columns').value = String(SUPPORTED_COLUMNS.includes(columns) ? columns : DEFAULT_OPTIONS.columns);
 
     setAvatar($('arena-avatar'), p);
     $('arena-name').textContent = p.name || t('menu.guest');
@@ -268,10 +293,11 @@ export class ArenaController {
     this.audio.unlock();
     this.lastCompetition = competitionId;
     const extraCapture = this.selectedExtra();
+    const columns = this.selectedColumns();
     if (this.serverMode) {
       // The server answers with a `match.start` push, handled by beginServerMatch.
       try {
-        await this.online.call('competition.join', { competition: competitionId, extraCapture });
+        await this.online.call('competition.join', { competition: competitionId, extraCapture, columns });
       } catch {
         // toast already shown
       }
@@ -284,6 +310,8 @@ export class ArenaController {
         career: this.career,
         competition: comp,
         extraCapture,
+        columns,
+        introMs: introMs(),
         emit: (msg) => this.onLocalMessage(msg),
         isPaused: () => this.session.paused && this.session.online?.gameId === game.gameId,
       });
@@ -372,8 +400,7 @@ export class ArenaController {
     this.drawTimers = [];
     const comp = COMPETITION_BY_ID[match.competition];
     const opponent = match.opponent;
-    const reduced = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
-    const spinMs = reduced ? 600 : 2800;
+    const spinMs = drawSpinMs();
 
     $('draw-place').textContent = `${comp.place} · ${comp.province}`;
     $('draw-stake').textContent = t('arena.drawStake', { stake: formatCoins(comp.stake), prize: formatCoins(comp.stake * 2) });
@@ -453,7 +480,7 @@ export class ArenaController {
     this.drawTimers.push(
       setTimeout(() => {
         if (this.ui.current === 'draw') this.ui.show(null);
-      }, 1500),
+      }, match.drawWaitMs ?? DRAW_WAIT_MS),
     );
   }
 }

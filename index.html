@@ -387,11 +387,22 @@
           </div>
         </div>
         <fieldset class="capture-choice">
-          <legend data-i18n="online.captureRule">Capture rule for this game</legend>
+          <legend data-i18n="arena.gameRules">Rules and board for this game</legend>
           <div class="seg-row">
             <label class="seg-opt"><input type="radio" name="arena-rule" value="column" checked /> <span data-i18n="online.captureColumn">Column only (standard)</span></label>
             <label class="seg-opt"><input type="radio" name="arena-rule" value="extra" /> <span data-i18n="online.captureExtra">Column + one extra bin of my choice</span></label>
           </div>
+          <label class="board-pick"><span data-i18n="arena.board">Board</span>
+            <select id="arena-columns" aria-label="Board size" data-i18n-aria="settings.boardSize">
+              <option value="8">4 × 8</option>
+              <option value="9">4 × 9</option>
+              <option value="12">4 × 12</option>
+              <option value="13">4 × 13</option>
+              <option value="15">4 × 15</option>
+              <option value="16">4 × 16</option>
+              <option value="24">4 × 24</option>
+            </select>
+          </label>
         </fieldset>
         <div class="carousel">
           <button class="car-arrow prev" id="comp-prev" aria-label="Previous" data-i18n-aria="online.prevRoom">‹</button>

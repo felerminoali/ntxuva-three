@@ -5,7 +5,7 @@
  * game against a computer player and speaks the same messages as the server (`match.start`,
  * `game.update`, `game.over`), so the game session plays both kinds of match the same way.
  */
-import { NORTH, SOUTH, STATUS, actingPlayer, actionsFor, applyAction, createGame } from './gameLogic.js';
+import { NORTH, SOUTH, STATUS, SUPPORTED_COLUMNS, actingPlayer, actionsFor, applyAction, createGame } from './gameLogic.js';
 import { requestAiAction } from './aiClient.js';
 import { STARTING_RATING, competitionBlocker, drawOpponent, eloDelta, payoutFor, rankTitle } from './competitions.js';
 import { levelFor } from './tiers.js';
@@ -14,7 +14,7 @@ import { SPIN_SEGMENTS, drawSegment, spinReadyAt } from './spin.js';
 export const CAREER_KEY = 'ntuxa.career.v1';
 export const DEVICE_STARTING_COINS = 2_000_000;
 export const COMPETITION_COLUMNS = 16;
-// Covers the opponent-draw animation (about 4.4 s) before the computer may move.
+// Default wait before the computer may move; covers the opponent-draw animation.
 const INTRO_MS = 4500;
 
 function freshCareer(now) {
@@ -164,7 +164,7 @@ export class DeviceCareer {
  * `isPaused()` holds the computer while the player has the pause menu open.
  */
 export class LocalCompetition {
-  constructor({ career, competition, extraCapture, emit, isPaused = () => false, rng = Math.random, introMs = INTRO_MS, think = [450, 1100] }) {
+  constructor({ career, competition, extraCapture, columns = COMPETITION_COLUMNS, emit, isPaused = () => false, rng = Math.random, introMs = INTRO_MS, think = [450, 1100] }) {
     Object.assign(this, { career, competition, emit, isPaused, rng, think });
     this.bot = drawOpponent(competition, career.data.rating, rng);
     career.enter(competition, this.bot.rating);
@@ -172,7 +172,7 @@ export class LocalCompetition {
     this.side = rng() < 0.5 ? SOUTH : NORTH;
     this.botSide = 1 - this.side;
     this.extraCapture = !!extraCapture;
-    this.state = createGame({ columns: COMPETITION_COLUMNS, extraCapture: this.extraCapture });
+    this.state = createGame({ columns: SUPPORTED_COLUMNS.includes(columns) ? columns : COMPETITION_COLUMNS, extraCapture: this.extraCapture });
     this.records = [];
     this.ply = 0;
     this.over = false;

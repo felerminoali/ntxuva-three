@@ -11,7 +11,7 @@ import { randomUUID } from 'node:crypto';
 import { createReadStream, existsSync, statSync } from 'node:fs';
 import { extname, join, normalize, resolve } from 'node:path';
 import { WebSocketServer } from 'ws';
-import { createGame, applyAction, actionsFor, actingPlayer, STATUS, SOUTH, NORTH } from '../src/gameLogic.js';
+import { createGame, applyAction, actionsFor, actingPlayer, STATUS, SOUTH, NORTH, SUPPORTED_COLUMNS } from '../src/gameLogic.js';
 import { TIERS, TIER_BY_ID, STORE_PACKS, levelFor, xpForLevel, experience, tierBlocker } from '../src/tiers.js';
 import {
   COMPETITION_BY_ID,
@@ -325,6 +325,7 @@ export function createApp(config, { store = new Store(config.dbPath), fetchImpl 
       competition: match.competition?.id ?? null,
       stake: match.tier.stake,
       extraCapture: match.extraCapture,
+      drawWaitMs: match.bot ? config.drawWaitMs : undefined,
       opponent: match.bot ? botView(match.bot) : opponentView(store.getUser(match.players[1 - side])),
       opponentConnected: match.bot ? true : online(match.players[1 - side]),
       state: match.state,
@@ -334,12 +335,14 @@ export function createApp(config, { store = new Store(config.dbPath), fetchImpl 
   }
 
   /** Starts a competition game against a computer player drawn for the user's rating. */
-  function startCompetition(userId, competitionId, extraCapture) {
+  function startCompetition(userId, competitionId, extraCapture, columns) {
     if (userMatch.has(userId)) throw new ClientError('in-game');
     const competition = COMPETITION_BY_ID[competitionId];
     const user = store.getUser(userId);
     const blocker = competitionBlocker(competition, user);
     if (blocker) throw new ClientError(blocker);
+    const size = columns === undefined || columns === null ? config.columns : Number(columns);
+    if (!SUPPORTED_COLUMNS.includes(size)) throw new ClientError('bad-board');
     leaveQueues(userId);
     const bot = drawOpponent(competition, user.ai_rating);
     const humanSide = Math.random() < 0.5 ? SOUTH : NORTH;
@@ -368,7 +371,7 @@ export function createApp(config, { store = new Store(config.dbPath), fetchImpl 
       startsAt: now() + config.aiIntroMs,
       extraCapture: !!extraCapture,
       players,
-      state: createGame({ columns: config.columns, extraCapture: !!extraCapture }),
+      state: createGame({ columns: size, extraCapture: !!extraCapture }),
       moves: [],
       records: [],
       timeouts: [0, 0],
@@ -658,8 +661,8 @@ export function createApp(config, { store = new Store(config.dbPath), fetchImpl 
     'lobby.get': () => ({ lobby: lobbySnapshot() }),
     'queue.join': (conn, { tier, extraCapture }) => joinQueue(requireUser(conn), tier, extraCapture),
     'queue.leave': (conn) => ({ left: leaveQueues(requireUser(conn)) }),
-    'competition.join': (conn, { competition, extraCapture }) =>
-      startCompetition(requireUser(conn), competition, extraCapture),
+    'competition.join': (conn, { competition, extraCapture, columns }) =>
+      startCompetition(requireUser(conn), competition, extraCapture, columns),
     'profile.avatar': (conn, { avatar }) => {
       const userId = requireUser(conn);
       if (avatar !== null && (typeof avatar !== 'string' || avatar.length > AVATAR_MAX || !AVATAR_RE.test(avatar))) {

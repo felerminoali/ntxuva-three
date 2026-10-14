@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { SPIN_COOLDOWN_MS, SPIN_RESCUE_BELOW, SPIN_SEGMENTS, drawSegment, spinReadyAt } from '../src/spin.js';
 import { COMPETITIONS } from '../src/competitions.js';
-import { DeviceCareer } from '../src/arenaLocal.js';
+import { DeviceCareer, LocalCompetition } from '../src/arenaLocal.js';
 
 function memoryStorage() {
   const map = new Map();
@@ -44,5 +44,20 @@ describe('lucky wheel', () => {
     expect(career.spin()).toBe(null);
     now += SPIN_COOLDOWN_MS;
     expect(career.spin()).not.toBe(null);
+  });
+});
+
+describe('device competitions', () => {
+  it('use the chosen board size and fall back to 4 x 16 for unsupported sizes', () => {
+    const make = (columns) => {
+      const career = new DeviceCareer({ storage: memoryStorage() });
+      const game = new LocalCompetition({ career, competition: COMPETITIONS[0], columns, emit: () => {}, introMs: 0 });
+      game.dispose?.();
+      return game.startMessage().state.columns;
+    };
+    expect(make(8)).toBe(8);
+    expect(make(24)).toBe(24);
+    expect(make(10)).toBe(16);
+    expect(make(undefined)).toBe(16);
   });
 });

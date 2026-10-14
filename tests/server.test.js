@@ -320,6 +320,23 @@ describe('competitions against computer players', () => {
     expect(loadConfig({}).startingCoins).toBe(2_000_000);
   });
 
+  it('derives the competition intro from DRAW_WAIT_MS unless AI_INTRO_MS is set', () => {
+    expect(loadConfig({})).toMatchObject({ drawWaitMs: 1500, aiIntroMs: 4700 });
+    expect(loadConfig({ DRAW_WAIT_MS: '3000' })).toMatchObject({ drawWaitMs: 3000, aiIntroMs: 6200 });
+    expect(loadConfig({ DRAW_WAIT_MS: '3000', AI_INTRO_MS: '1000' }).aiIntroMs).toBe(1000);
+  });
+
+  it('plays competitions on the chosen board size and sends the draw wait', async () => {
+    await compBoot({ drawWaitMs: 2500 });
+    const c = await client();
+    await c.req('auth.guest', { name: 'Lina' });
+    await expect(c.req('competition.join', { competition: 'cuamba', columns: 10 })).rejects.toMatchObject({ code: 'bad-board' });
+    await c.req('competition.join', { competition: 'cuamba', columns: 8 });
+    const start = await c.next('match.start');
+    expect(start.state.columns).toBe(8);
+    expect(start.drawWaitMs).toBe(2500);
+  });
+
   it('charges the entry, draws a matched computer opponent and blocks unaffordable competitions', async () => {
     await compBoot();
     const c = await client();

@@ -2,6 +2,7 @@
 const int = (v, d) => (v === undefined || v === '' || Number.isNaN(Number(v)) ? d : Math.trunc(Number(v)));
 
 export function loadConfig(env = process.env) {
+  const drawWaitMs = Math.max(0, int(env.DRAW_WAIT_MS, 1500));
   return {
     port: int(env.PORT, 8787),
     dbPath: env.DB_PATH || 'server/data/ntuxa.db',
@@ -16,7 +17,9 @@ export function loadConfig(env = process.env) {
     spinCooldownSeconds: int(env.SPIN_COOLDOWN_SECONDS, 4 * 3600),
     storeCooldownSeconds: int(env.STORE_COOLDOWN_SECONDS, 30),
     messagesPerSecond: int(env.MESSAGES_PER_SECOND, 40),
-    aiIntroMs: int(env.AI_INTRO_MS, 5000),
+    // The opponent roulette spins ~2.9 s, then the result stays for drawWaitMs.
+    drawWaitMs,
+    aiIntroMs: int(env.AI_INTRO_MS, 3200 + drawWaitMs),
     aiMinThinkMs: int(env.AI_MIN_THINK_MS, 350),
     aiWorkers: int(env.AI_WORKERS, 1),
     columns: 16,

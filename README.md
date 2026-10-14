@@ -73,7 +73,8 @@ The **vs Computer** tile opens a lobby with your career card and a carousel of c
 - **Opponent draw:** when you enter, an animated roulette draws an opponent with a Mozambican name. Their skill is a random integer from the competition's lowest skill up to the skill that matches your rating. Some games are relaxed and others are fully matched, as when you meet different people at the table. Higher skills search deeper and make fewer random choices.
 - **Career:** the database keeps each player's avatar (which you can upload), coins, rating with a rank title (Novice up to Grandmaster), games, wins and losses, win rate, total winnings, tournaments won (one trophy per competition victory) and leaderboard position.
 - **Storage:** signed in, the career is saved on the server (SQLite) and the server runs the computer player. Not signed in, everything runs and is saved on the device (`localStorage`), which works even on a static host such as Vercel. Leaving an unfinished competition counts as a loss.
-- The capture rule (column only, or column plus extra bin) is chosen in the lobby.
+- The capture rule (column only, or column plus extra bin) and the **board size** (4 × 8 up to 4 × 24) are chosen in the lobby. The board size is shared with Settings, so friendly games use it too; small boards are easier to play on a phone.
+- **Draw wait:** after the opponent roulette stops, the result stays on screen for `VITE_DRAW_WAIT_MS` milliseconds (default 1500) on the device, or the server's `DRAW_WAIT_MS` when signed in. Set `VITE_DRAW_WAIT_MS` in Vercel's environment variables and redeploy (Vite reads it at build time).
 
 ## Lucky wheel (getting coins back)
 
@@ -111,7 +112,8 @@ The server (`server/index.js`) uses environment variables:
 | `FACEBOOK_APP_ID` | — | Enables "Continue with Facebook" (create an app at developers.facebook.com and add your site's domain) |
 | `FACEBOOK_APP_SECRET` | — | Optional; enables stricter token verification via `debug_token` |
 | `STARTING_COINS` | `2000000` | Coins for new players |
-| `AI_INTRO_MS` | `5000` | Pause before a competition starts (covers the opponent draw) |
+| `DRAW_WAIT_MS` | `1500` | How long the drawn opponent stays on screen after the roulette stops (ms) |
+| `AI_INTRO_MS` | `3200 + DRAW_WAIT_MS` | Pause before a competition starts (covers the opponent draw) |
 | `AI_MIN_THINK_MS` | `350` | Minimum "thinking" time of a computer player |
 | `AI_WORKERS` | `1` | Worker threads that compute computer moves |
 | `SPIN_COOLDOWN_SECONDS` | `14400` | Time between free lucky-wheel spins (always available below 1M coins) |
