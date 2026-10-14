@@ -1,5 +1,5 @@
 # Render Blueprint for the online game server (WebSocket + SQLite).
-# The web client stays on Vercel; set VITE_SERVER_URL there to wss://<this service>.onrender.com/ws
+# The web client stays on Vercel; set SERVER_URL there to wss://<this service>.onrender.com/ws
 services:
   - type: web
     name: ntxuva-server

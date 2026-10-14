@@ -163,7 +163,8 @@ export class NetClient {
 }
 
 function defaultUrl() {
-  const configured = import.meta.env?.VITE_SERVER_URL;
+  // Injected at build time from SERVER_URL (see vite.config.js).
+  const configured = typeof __SERVER_URL__ === 'undefined' ? '' : __SERVER_URL__;
   if (configured) return configured;
   const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
   return `${proto}//${location.host}/ws`;

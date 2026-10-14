@@ -125,14 +125,14 @@ The server (`server/index.js`) uses environment variables:
 | `STORE_COOLDOWN_SECONDS` | `30` | Wait between free store packs |
 | `STATIC_DIR` | `dist` | Built client served by the server |
 
-The client connects to `/ws` on the same host. To host the client elsewhere, build it with `VITE_SERVER_URL=wss://your-server/ws`.
+The client connects to `/ws` on the same host. To host the client elsewhere, build it with `SERVER_URL=wss://your-server/ws`.
 
 ### Deploying (Vercel + Render)
 
 Vercel serves only the static client; it cannot run the WebSocket server.
 
 1. On [Render](https://render.com): **New → Blueprint**, select this repository (it uses `render.yaml`) and enter `FACEBOOK_APP_ID` and `FACEBOOK_APP_SECRET`.
-2. On Vercel: add the environment variable `VITE_SERVER_URL=wss://<your-service>.onrender.com/ws` and redeploy.
+2. On Vercel: add the environment variable `SERVER_URL=wss://<your-service>.onrender.com/ws` and redeploy.
 
 Render's free plan sleeps after inactivity (the first connection can take about a minute) and has no persistent disk, so accounts reset on restart; see `render.yaml` for the paid-disk option.
 
