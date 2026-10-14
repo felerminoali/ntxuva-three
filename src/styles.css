@@ -3237,3 +3237,604 @@ input[type='text'] {
     animation: none;
   }
 }
+
+/* ---------- Lucky wheel ---------- */
+
+.sq-btn.labeled.gold {
+  color: #2b1a10;
+  border-color: #ffe3a0;
+  background: linear-gradient(180deg, #ffd56e, #d9962a);
+}
+
+.sq-btn.labeled.gold svg {
+  stroke: #2b1a10;
+}
+
+.spin-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  display: grid;
+  place-items: center;
+  padding: max(12px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
+  background: rgba(12, 7, 3, 0.72);
+  backdrop-filter: blur(3px);
+  animation: fade 0.25s ease;
+}
+
+.spin-card {
+  position: relative;
+  width: min(380px, 100%);
+  max-height: 100%;
+  overflow-y: auto;
+  padding: 18px 18px 20px;
+  text-align: center;
+  border-radius: 20px;
+  border: 1px solid var(--panel-border);
+  background: radial-gradient(circle at 50% 0%, rgba(120, 70, 30, 0.95), rgba(30, 18, 10, 0.97) 70%);
+  box-shadow: var(--shadow);
+}
+
+.spin-card h2 {
+  margin: 0 0 4px;
+  font-family: var(--serif);
+  color: var(--gold);
+  font-size: 1.6rem;
+}
+
+.spin-card .note {
+  margin: 0 0 10px;
+  font-size: 0.85rem;
+}
+
+.spin-close {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1px solid var(--panel-border);
+  background: rgba(0, 0, 0, 0.35);
+  color: var(--cream);
+  font-size: 1.4rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.wheel-wrap {
+  position: relative;
+  width: min(300px, 74vw, 46dvh);
+  aspect-ratio: 1;
+  margin: 6px auto 8px;
+}
+
+.wheel {
+  width: 100%;
+  height: 100%;
+  display: block;
+  filter: drop-shadow(0 10px 18px rgba(0, 0, 0, 0.5));
+}
+
+.wheel-rim {
+  fill: #3a2414;
+  stroke: var(--gold);
+  stroke-width: 4;
+}
+
+.wheel-rotor {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.wheel-rotor path {
+  stroke: rgba(255, 230, 180, 0.55);
+  stroke-width: 1;
+}
+
+.wheel-rotor path.jackpot {
+  fill: #f2c14e;
+}
+
+.wheel-label {
+  fill: #fff7e6;
+  font: 800 13px var(--font);
+  text-anchor: middle;
+  dominant-baseline: middle;
+  paint-order: stroke;
+  stroke: rgba(0, 0, 0, 0.45);
+  stroke-width: 2.5px;
+}
+
+.wheel-stud {
+  fill: #ffe3a0;
+}
+
+.wheel-pointer {
+  position: absolute;
+  top: -6px;
+  left: 50%;
+  z-index: 2;
+  width: 0;
+  height: 0;
+  transform: translateX(-50%);
+  border-left: 14px solid transparent;
+  border-right: 14px solid transparent;
+  border-top: 26px solid #fff1c9;
+  filter: drop-shadow(0 3px 3px rgba(0, 0, 0, 0.6));
+}
+
+.wheel-hub {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 24%;
+  aspect-ratio: 1;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  border: 3px solid #fff1c9;
+  background: radial-gradient(circle at 35% 30%, #ffd56e, #b5532d);
+  color: #2b1a10;
+  font-weight: 900;
+  font-size: clamp(0.8rem, 3.6vw, 1.05rem);
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+}
+
+.wheel-hub:disabled {
+  cursor: default;
+  filter: saturate(0.6);
+}
+
+.spin-result {
+  min-height: 1.4em;
+  margin: 4px 0 10px;
+  font-weight: 800;
+  font-size: 1.1rem;
+  color: var(--gold);
+}
+
+.spin-modal.won .spin-result {
+  animation: pop 0.5s ease;
+}
+
+.spin-card .btn.big {
+  width: 100%;
+}
+
+@keyframes pop {
+  0% {
+    transform: scale(0.6);
+    opacity: 0;
+  }
+  70% {
+    transform: scale(1.15);
+  }
+}
+
+@media (max-height: 520px) and (orientation: landscape) {
+  .spin-card {
+    width: min(620px, 100%);
+    display: grid;
+    grid-template-columns: auto 1fr;
+    grid-template-areas: 'wheel title' 'wheel sub' 'wheel result' 'wheel btn';
+    align-content: center;
+    column-gap: 18px;
+    text-align: left;
+  }
+  .spin-card h2 { grid-area: title; }
+  .spin-card .note { grid-area: sub; }
+  .wheel-wrap { grid-area: wheel; width: min(260px, 70dvh); margin: 0; }
+  .spin-result { grid-area: result; }
+  .spin-card .btn.big { grid-area: btn; }
+}
+/* ---------- Compact phone layouts (iPhone 11 and similar) ---------- */
+
+.lobby-top {
+  justify-content: flex-start;
+  margin-bottom: 12px;
+}
+
+.lobby-top h2 {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+}
+
+.more-toggle,
+.more-note {
+  display: none;
+}
+
+.more-menu,
+.more-pop {
+  display: contents;
+}
+
+.tabs {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  margin: 0 0 12px;
+  border-radius: 14px;
+  background: rgba(0, 0, 0, 0.35);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.4);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.tabs button {
+  flex: 1;
+  min-height: 38px;
+  padding: 6px 10px;
+  border: 0;
+  border-radius: 10px;
+  font: inherit;
+  font-weight: 700;
+  font-size: 0.9rem;
+  white-space: nowrap;
+  color: var(--muted);
+  background: transparent;
+  cursor: pointer;
+}
+
+.tabs button.on {
+  color: #3a2200;
+  background: linear-gradient(180deg, #ffe27a, #e0a422);
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.5);
+}
+
+.settings.tabbed fieldset {
+  margin: 0;
+}
+
+.settings.tabbed fieldset:not(.on) {
+  display: none;
+}
+
+.settings.tabbed legend {
+  display: none;
+}
+
+.settings.tabbed [data-pane='game'] legend {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+/* Long pages scroll, but their Back button stays on screen. */
+.panel:has(> .panel-foot) {
+  padding-bottom: 0;
+}
+
+.panel-foot {
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+  margin-top: 6px;
+  padding: 14px 0 max(14px, env(safe-area-inset-bottom));
+  background: linear-gradient(180deg, rgba(30, 18, 11, 0), rgba(30, 18, 11, 0.97) 40%);
+}
+
+.row.panel-foot {
+  margin-top: 6px;
+}
+
+@media (max-width: 720px), (max-height: 520px) {
+  .panel.lobby-panel {
+    padding: 12px 14px;
+  }
+  .lobby-top {
+    gap: 10px;
+    margin-bottom: 8px;
+  }
+  .lobby-top h2 {
+    font-size: 1.35rem;
+  }
+  .lobby-top .btn.back {
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+  }
+  .lobby-panel .profile-card {
+    gap: 10px;
+    padding: 8px 10px;
+    margin-bottom: 8px;
+  }
+  .lobby-panel .profile-card {
+    flex-wrap: nowrap;
+  }
+  .lobby-panel .profile-main {
+    flex: 1 1 0;
+  }
+  .lobby-panel .profile-level {
+    flex-wrap: wrap;
+    gap: 2px 6px;
+  }
+  .lobby-panel .source-pill {
+    margin-left: 0;
+  }
+  .lobby-panel .profile-card .avatar,
+  .lobby-panel .avatar-edit .avatar {
+    width: 46px;
+    height: 46px;
+    font-size: 1.3rem;
+  }
+  .lobby-panel .profile-name {
+    font-size: 1rem;
+  }
+  .lobby-panel .coin-box {
+    font-size: 1.05rem;
+  }
+  .lobby-panel .stat-grid {
+    margin: 0 0 8px;
+  }
+  .chip-row {
+    overflow: visible;
+    padding: 0 0 2px;
+  }
+  .chip {
+    padding: 7px 12px 7px 9px;
+    font-size: 0.84rem;
+  }
+  .more-menu {
+    display: block;
+    position: relative;
+    margin-left: auto;
+  }
+  .more-toggle {
+    display: inline-flex;
+    padding: 7px 12px;
+  }
+  .more-toggle svg {
+    stroke-width: 3.5;
+    stroke-linecap: round;
+  }
+  .more-menu.open .more-toggle {
+    border-color: var(--gold);
+  }
+  .more-pop {
+    display: none;
+    position: absolute;
+    z-index: 6;
+    top: calc(100% + 6px);
+    right: 0;
+    width: max-content;
+    max-width: min(280px, 80vw);
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+    padding: 8px;
+    border-radius: 14px;
+    border: 1px solid rgba(242, 193, 78, 0.45);
+    background: linear-gradient(180deg, #3d2616, #1f130b);
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.6);
+  }
+  .more-menu.open .more-pop {
+    display: flex;
+  }
+  .more-pop .chip {
+    justify-content: flex-start;
+  }
+  .more-pop .chip[hidden] {
+    display: none;
+  }
+  .more-note {
+    display: block;
+    margin: 2px 4px 0;
+    font-size: 0.74rem;
+    line-height: 1.4;
+    white-space: normal;
+  }
+  .arena-note,
+  .lobby-panel .capture-choice .note {
+    display: none;
+  }
+  .lobby-panel .capture-choice {
+    gap: 4px;
+    padding: 2px 8px 8px;
+    margin: 6px 0 8px;
+  }
+  .lobby-panel .capture-choice legend {
+    font-size: 0.78rem;
+  }
+  .lobby-panel .capture-choice .seg-row {
+    flex-wrap: nowrap;
+  }
+  .lobby-panel .capture-choice .seg-opt {
+    min-width: 0;
+    min-height: 36px;
+    padding: 4px 8px;
+    font-size: 0.78rem;
+    line-height: 1.2;
+  }
+  .lobby-panel .tier-list {
+    gap: 8px;
+    padding-bottom: 6px;
+  }
+  .lobby-panel .tier-list li.tier {
+    width: clamp(156px, 42vw, 196px);
+    gap: 6px;
+    padding: 0 10px 10px;
+  }
+  .lobby-panel .tier-banner {
+    margin: 0 -10px;
+    padding: 8px 8px 12px;
+  }
+  .lobby-panel .tier-place {
+    font-size: 1rem;
+  }
+  .lobby-panel .tier-prize-amount {
+    font-size: 1.35rem;
+  }
+  .lobby-panel .tier-entry {
+    font-size: 0.85rem;
+  }
+  .lobby-panel .tier-play {
+    padding: 8px;
+    font-size: 0.95rem;
+  }
+  .lobby-panel .car-arrow {
+    width: 34px;
+    height: 34px;
+    margin-top: -17px;
+    font-size: 1.5rem;
+  }
+  .lobby-panel .carousel .tier-list {
+    padding-left: 36px;
+    padding-right: 36px;
+  }
+  .panel.wide:not(.lobby-panel) {
+    padding-top: 18px;
+    padding-left: 18px;
+    padding-right: 18px;
+  }
+  .panel.wide h2 {
+    font-size: 1.5rem;
+    margin-bottom: 10px;
+  }
+  .settings fieldset {
+    gap: 10px;
+    padding: 10px 12px 12px;
+  }
+}
+
+/* Landscape phones: short screens get two-column layouts. */
+@media (max-height: 520px) and (orientation: landscape) {
+  .panel.arena-panel {
+    width: min(900px, 100%);
+    display: grid;
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+    column-gap: 14px;
+    align-content: start;
+  }
+  .arena-panel > .lobby-top,
+  .arena-panel > .profile-card,
+  .arena-panel > .stat-grid,
+  .arena-panel > .chip-row {
+    grid-column: 1;
+  }
+  .arena-panel > .capture-choice {
+    grid-column: 2;
+    grid-row: 4 / span 2;
+    align-self: start;
+    margin: 0;
+  }
+  .arena-panel > .carousel {
+    grid-column: 2;
+    grid-row: 1 / span 3;
+    align-self: start;
+  }
+  .arena-panel .stat-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 4px;
+  }
+  .arena-panel .stat-grid .stat {
+    padding: 2px 4px;
+  }
+  .arena-panel .stat-grid .stat b {
+    font-size: 0.9rem;
+  }
+  .arena-panel .stat-grid .stat span {
+    font-size: 0.56rem;
+  }
+  .panel.lobby-panel:not(.arena-panel) {
+    width: min(900px, 100%);
+    display: grid;
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+    column-gap: 14px;
+    align-content: start;
+  }
+  .lobby-panel:not(.arena-panel) > :not(.carousel) {
+    grid-column: 1;
+  }
+  .lobby-panel:not(.arena-panel) > .carousel {
+    grid-column: 2;
+    grid-row: 1 / span 6;
+    align-self: center;
+  }
+  .lobby-panel .profile-card .avatar {
+    width: 38px;
+    height: 38px;
+  }
+  .lobby-panel .tier-list li.tier {
+    width: 172px;
+  }
+  .lobby-panel .tier-meta {
+    display: none;
+  }
+  .lobby-panel .capture-choice .seg-opt {
+    min-height: 32px;
+    font-size: 0.72rem;
+  }
+  .more-pop {
+    top: auto;
+    bottom: calc(100% + 6px);
+  }
+  #screen-pause .panel {
+    width: min(560px, 100%);
+    padding: 14px 18px;
+  }
+  #screen-pause h2 {
+    margin-bottom: 8px;
+  }
+  #screen-pause .menu-buttons {
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin: 0;
+  }
+  #screen-pause .menu-buttons .btn {
+    padding: 10px 12px;
+  }
+  #screen-play .panel.sheet {
+    width: min(640px, 100%);
+  }
+  #setup-desc {
+    margin: 0;
+    font-size: 0.8rem;
+  }
+  .setup-ai {
+    grid-template-columns: 1fr 1fr;
+    margin: 8px 0;
+  }
+  #screen-play .rule-option {
+    font-size: 0.8rem;
+  }
+  #screen-play .note {
+    margin: 6px 0 0;
+    font-size: 0.75rem;
+  }
+  #screen-play .sheet-actions {
+    margin-top: 8px;
+  }
+  #screen-signin .panel {
+    width: min(760px, 100%);
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-auto-flow: row dense;
+    column-gap: 22px;
+    align-items: center;
+    text-align: left;
+  }
+  #screen-signin .panel > * {
+    grid-column: 1;
+    margin-top: 0;
+    margin-bottom: 8px;
+  }
+  #screen-signin .panel > h2 {
+    grid-column: 1 / -1;
+  }
+  #screen-signin .panel > form,
+  #screen-signin .panel > [data-back],
+  #screen-signin .panel > .status-line {
+    grid-column: 2;
+  }
+  #screen-signin .panel > p {
+    font-size: 0.85rem;
+  }
+  .settings.tabbed fieldset {
+    grid-template-columns: 1fr 1fr;
+    column-gap: 16px;
+  }
+}

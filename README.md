@@ -72,8 +72,15 @@ The **vs Computer** tile opens a lobby with your career card and a carousel of c
 - **Unlocking:** a competition is open once you can pay its entry. You begin with **2M coins**, so Cuamba is the first step, and the winnings from it take you to Nampula and beyond.
 - **Opponent draw:** when you enter, an animated roulette draws an opponent with a Mozambican name. Their skill is a random integer from the competition's lowest skill up to the skill that matches your rating. Some games are relaxed and others are fully matched, as when you meet different people at the table. Higher skills search deeper and make fewer random choices.
 - **Career:** the database keeps each player's avatar (which you can upload), coins, rating with a rank title (Novice up to Grandmaster), games, wins and losses, win rate, total winnings, tournaments won (one trophy per competition victory) and leaderboard position.
-- **Storage:** signed in, the career is saved on the server (SQLite) and the server runs the computer player. Not signed in, everything runs and is saved on the device (`localStorage`), which works even on a static host such as Vercel. A device player gets a 1M refill every 20 hours, or right away when below 1M. Leaving an unfinished competition counts as a loss.
+- **Storage:** signed in, the career is saved on the server (SQLite) and the server runs the computer player. Not signed in, everything runs and is saved on the device (`localStorage`), which works even on a static host such as Vercel. Leaving an unfinished competition counts as a loss.
 - The capture rule (column only, or column plus extra bin) is chosen in the lobby.
+
+## Lucky wheel (getting coins back)
+
+- A **free spin** of the lucky wheel is ready every **4 hours**. Prizes range from 250K to 10M coins (smaller prizes are more likely).
+- If your coins drop **below 1M** (the entry to Cuamba, the cheapest competition), the wheel is **always** ready, so you can never get stuck.
+- The wheel opens by itself when you open the game and a spin is ready, and again when you are out of coins in the competitions or online lobby. It can also be opened from the gold **Spin** button in the main menu or the gift chip in either lobby.
+- Signed in, the spin is drawn by the server and recorded in the coin ledger (lucky-wheel); otherwise it runs on the device.
 
 ## Online play, coins and rooms
 
@@ -90,7 +97,7 @@ The **vs Computer** tile opens a lobby with your career card and a carousel of c
 
   Bigger rooms also need a minimum **level** (gained by playing; wins count triple), so the richest rooms bring together the most experienced players.
 - **Matchmaking:** pick a room and a capture rule (column only, or column + extra bin). You are paired with the next player waiting in the same room with the same rule; sides are random and South moves first.
-- **Coins:** a daily bonus, plus a **demo store** with free packs. Coins are purely virtual: no real money is involved and they cannot be cashed out. A leaderboard lists the richest players.
+- **Coins:** the lucky wheel, plus a **demo store** with free packs. Coins are purely virtual: no real money is involved and they cannot be cashed out. A leaderboard lists the richest players.
 - **Fair play:** the server is authoritative; it validates every move with the same rules engine. Each turn has a clock (60 s by default). When it runs out, a random legal move is played, and after 3 time-outs the player forfeits. If a player disconnects they have 60 s to come back (the game resumes automatically), otherwise they forfeit. Leaving or resigning loses the stake.
 
 ### Server configuration
@@ -107,7 +114,8 @@ The server (`server/index.js`) uses environment variables:
 | `AI_INTRO_MS` | `5000` | Pause before a competition starts (covers the opponent draw) |
 | `AI_MIN_THINK_MS` | `350` | Minimum "thinking" time of a computer player |
 | `AI_WORKERS` | `1` | Worker threads that compute computer moves |
-| `DAILY_BONUS` | `1000` | Daily bonus amount |
+| `SPIN_COOLDOWN_SECONDS` | `14400` | Time between free lucky-wheel spins (always available below 1M coins) |
+| `DAILY_BONUS` | `1000` | Legacy daily bonus amount (`bonus.claim`) |
 | `RAKE_PERCENT` | `0` | House cut of each pot |
 | `TURN_SECONDS` | `60` | Turn clock (`0` disables it) |
 | `RECONNECT_SECONDS` | `60` | Grace period after a disconnect |
@@ -195,6 +203,8 @@ src/
   competitions.js     competitions vs computer: ladder, 1-20 skills, opponent draw, Elo, payouts, bot names (shared with the server)
   arena.js            competition lobby, career card, avatar upload and the opponent-draw roulette
   arenaLocal.js       device career (localStorage) and the in-browser competition engine
+  spin.js             lucky-wheel prizes, weights and cooldown rules (shared with the server)
+  luckyWheel.js       lucky-wheel modal: SVG wheel, spin animation, auto-prompt
   net.js              WebSocket client: requests, pushes, reconnection, server clock offset
   online.js           sign-in, lobby, store, leaderboard, matchmaking, online game bridge
   facebook.js         loads the Facebook SDK on demand and logs in
@@ -213,6 +223,7 @@ tests/
   ai.test.js          the AI only returns legal actions, takes wins, and full AI-vs-AI games
   server.test.js      accounts, wallet, Facebook verification, matchmaking, legality, payouts, timeouts, reconnects, competitions
   competitions.test.js  ladder, skill draw, Elo, payouts and skill-limited AI
+  spin.test.js        lucky-wheel cooldown, rescue rule, weighting and device spins
   helpers.js          deterministic RNG for the tests
 ```
 
@@ -237,9 +248,13 @@ Choosing the extra capture bin is treated as its own decision node. Positions ar
 
 ## Testing
 
-`npm test` runs 39 unit tests: initial setup, sowing direction and relay, capture conditions, the extra-bin choice, both phase restrictions, illegal-move rejection, turn order, game-end detection, a clean restart, and AI legality across many seeded games.
+`npm test` runs 80 unit tests: initial setup, sowing direction and relay, capture conditions, the extra-bin choice, both phase restrictions, illegal-move rejection, turn order, game-end detection, a clean restart, and AI legality across many seeded games.
 
 The full game was also smoke-tested in headless Microsoft Edge with no console errors. That run covered mouse clicks, illegal clicks, undo, history, pause and restart, vs-AI play including the extra-bin choice, a practice hint, the tutorial, a complete game to the end screen, and touch taps on a mobile viewport.
+
+## Mobile layout
+
+Every screen is checked on an iPhone 11 viewport (414 × 896, and 414 × 715 with the browser bars) in portrait and landscape (896 × 360). The lobbies keep secondary actions (leaderboard, rename, sign in, Facebook, sign out) in a **⋯** menu on phones, switch to two columns in landscape, Settings is split into tabs, and long pages (Rules, About) scroll with the Back button always visible.
 
 ## Settings
 

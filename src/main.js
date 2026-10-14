@@ -15,6 +15,7 @@ import { createGame } from './gameLogic.js';
 import { loadSettings, saveSettings } from './settings.js';
 import { OnlineController } from './online.js';
 import { ArenaController } from './arena.js';
+import { LuckyWheel } from './luckyWheel.js';
 import { applyTranslations, getLanguage, setLanguage } from './i18n.js';
 
 let settings = loadSettings();
@@ -90,6 +91,8 @@ arena = new ArenaController({
   getSettings: () => settings,
   saveSettings: (changes) => applySettings(changes),
 });
+const wheel = new LuckyWheel({ ui, audio, online, arena, session });
+document.getElementById('btn-wheel').addEventListener('click', () => wheel.open());
 document.getElementById('btn-arena').addEventListener('click', () => arena.open());
 document.getElementById('btn-online').addEventListener('click', () => {
   audio.unlock();
@@ -163,7 +166,10 @@ stage.renderer.setAnimationLoop((now) => {
 ui.hideLoading();
 ui.show('menu');
 online.renderMenuBar();
-online.autoResume();
+// Every visit opens with the lucky wheel when a free spin is ready (after a saved sign-in resumes).
+Promise.race([online.autoResume(), new Promise((r) => setTimeout(r, 4000))]).finally(() =>
+  setTimeout(() => wheel.maybePrompt(), 700),
+);
 
 // Exposed for debugging and automated smoke tests.
-window.__ntuxa = { session, stage, board, pieces, ui, online, arena, audio, get settings() { return settings; } };
+window.__ntuxa = { session, stage, board, pieces, ui, online, arena, wheel, audio, get settings() { return settings; } };

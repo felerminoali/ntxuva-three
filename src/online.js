@@ -42,7 +42,6 @@ export class OnlineController {
     this.queuedTier = null;
     this.lastTier = null;
     this.lastExtra = false;
-    this.bonusTimer = null;
     this.wired = false;
     /** Competitions controller (set by main.js); handles computer-opponent matches. */
     this.arena = null;
@@ -172,7 +171,7 @@ export class OnlineController {
     $('online-facebook').addEventListener('click', () => this.signInFacebook());
     $('online-signout').addEventListener('click', () => this.signOut());
     $('online-rename').addEventListener('click', () => this.rename());
-    $('online-bonus').addEventListener('click', () => this.claimBonus());
+    $('online-bonus').addEventListener('click', () => this.wheel?.open());
     $('online-store').addEventListener('click', () => {
       this.renderStore();
       this.ui.push('store');
@@ -190,9 +189,6 @@ export class OnlineController {
       this.renderMenuBar();
       this.renderLobby();
     });
-    this.bonusTimer = setInterval(() => {
-      if (this.ui.current === 'online') this.renderBonus();
-    }, 30_000);
   }
 
   selectedExtra() {
@@ -280,16 +276,6 @@ export class OnlineController {
     }
   }
 
-  async claimBonus() {
-    try {
-      const { amount } = await this.call('bonus.claim');
-      this.audio.win();
-      this.ui.toast(t('account.bonusClaimed', { coins: amount.toLocaleString() }), 'capture');
-    } catch {
-      // toast already shown
-    }
-  }
-
   // --- Lobby rendering --------------------------------------------------------------------
 
   renderLobby() {
@@ -315,25 +301,8 @@ export class OnlineController {
     $('profile-coins').textContent = p.coins.toLocaleString();
     $('profile-coins').title = `${p.coins.toLocaleString()} ${t('account.coins')}`;
     $('online-facebook').hidden = p.facebook;
-    this.renderBonus();
+    this.wheel?.renderChips();
     this.renderMenuBar();
-  }
-
-  renderBonus() {
-    const p = this.profile;
-    if (!p) return;
-    const btn = $('online-bonus');
-    const label = $('online-bonus-text');
-    const wait = p.bonusAt - (Date.now() + this.net.clockOffset);
-    btn.classList.toggle('ready', wait <= 0);
-    if (wait <= 0) {
-      btn.disabled = false;
-      label.textContent = t('account.dailyBonus', { coins: formatCoins(p.dailyBonus) });
-    } else {
-      btn.disabled = true;
-      const minutes = Math.ceil(wait / 60_000);
-      label.textContent = t('account.bonusIn', { h: Math.floor(minutes / 60), m: minutes % 60 });
-    }
   }
 
   /** Called whenever the signed-in profile changes (or the player signs out). */

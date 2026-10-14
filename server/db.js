@@ -70,6 +70,7 @@ const MIGRATIONS = {
     ai_rating: 'INTEGER NOT NULL DEFAULT 1200',
     winnings: 'INTEGER NOT NULL DEFAULT 0',
     tournaments: 'INTEGER NOT NULL DEFAULT 0',
+    last_spin_at: 'INTEGER NOT NULL DEFAULT 0',
   },
   games: {
     kind: "TEXT NOT NULL DEFAULT 'online'",
@@ -79,7 +80,7 @@ const MIGRATIONS = {
 
 const FIELDS =
   'id, name, avatar, fb_id, coins, games, wins, losses, draws, rating, last_bonus_at, last_store_at, ' +
-  'ai_games, ai_wins, ai_losses, ai_draws, ai_rating, winnings, tournaments';
+  'ai_games, ai_wins, ai_losses, ai_draws, ai_rating, winnings, tournaments, last_spin_at';
 
 export class Store {
   constructor(path) {
@@ -180,7 +181,7 @@ export class Store {
   }
 
   setTimestamp(userId, field, value) {
-    if (!['last_bonus_at', 'last_store_at'].includes(field)) throw new Error('bad field');
+    if (!['last_bonus_at', 'last_store_at', 'last_spin_at'].includes(field)) throw new Error('bad field');
     this.db.prepare(`UPDATE users SET ${field} = ? WHERE id = ?`).run(value, userId);
   }
 

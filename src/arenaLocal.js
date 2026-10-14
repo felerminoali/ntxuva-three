@@ -9,11 +9,10 @@ import { NORTH, SOUTH, STATUS, actingPlayer, actionsFor, applyAction, createGame
 import { requestAiAction } from './aiClient.js';
 import { STARTING_RATING, competitionBlocker, drawOpponent, eloDelta, payoutFor, rankTitle } from './competitions.js';
 import { levelFor } from './tiers.js';
+import { SPIN_SEGMENTS, drawSegment, spinReadyAt } from './spin.js';
 
 export const CAREER_KEY = 'ntuxa.career.v1';
 export const DEVICE_STARTING_COINS = 2_000_000;
-export const DEVICE_BONUS = 1_000_000;
-export const DEVICE_BONUS_MS = 20 * 3600 * 1000;
 export const COMPETITION_COLUMNS = 16;
 // Covers the opponent-draw animation (about 4.4 s) before the computer may move.
 const INTRO_MS = 4500;
@@ -31,7 +30,7 @@ function freshCareer(now) {
     winnings: 0,
     tournaments: 0,
     trophies: {},
-    bonusAt: now,
+    lastSpinAt: 0,
     active: null,
     createdAt: now,
   };
@@ -85,8 +84,7 @@ export class DeviceCareer {
       draws: d.draws,
       rating: d.rating,
       level,
-      bonusAt: this.bonusAt(),
-      dailyBonus: DEVICE_BONUS,
+      spinAt: this.spinAt(),
       career: {
         aiGames: d.games,
         aiWins: d.wins,
@@ -102,17 +100,20 @@ export class DeviceCareer {
     };
   }
 
-  /** When the next bonus can be claimed; immediately if the player cannot afford any entry. */
-  bonusAt() {
-    return this.data.coins < DEVICE_BONUS ? 0 : this.data.bonusAt;
+  /** When the lucky wheel can next be spun (0 = now). */
+  spinAt() {
+    return spinReadyAt(this.data.lastSpinAt, this.data.coins);
   }
 
-  claimBonus() {
-    if (this.bonusAt() > this.now()) return 0;
-    this.data.coins += DEVICE_BONUS;
-    this.data.bonusAt = this.now() + DEVICE_BONUS_MS;
+  /** Spins the wheel; returns the segment won, or null when it is not ready yet. */
+  spin(rng = Math.random) {
+    if (this.spinAt() > this.now()) return null;
+    const segment = drawSegment(rng);
+    const { coins } = SPIN_SEGMENTS[segment];
+    this.data.coins += coins;
+    this.data.lastSpinAt = this.now();
     this.save();
-    return DEVICE_BONUS;
+    return { segment, coins, profile: this.profile };
   }
 
   rename(name) {

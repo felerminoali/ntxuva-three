@@ -81,7 +81,7 @@ export class ArenaController {
     $('arena-avatar-btn').addEventListener('click', () => $('arena-avatar-file').click());
     $('arena-avatar-file').addEventListener('change', (e) => this.uploadAvatar(e.target));
     $('arena-rename').addEventListener('click', () => this.rename());
-    $('arena-bonus').addEventListener('click', () => this.claimBonus());
+    $('arena-bonus').addEventListener('click', () => this.wheel?.open());
     $('arena-store').addEventListener('click', () => this.online.openStore());
     $('arena-leaderboard').addEventListener('click', () => this.online.showLeaderboard());
     $('arena-signin').addEventListener('click', () => this.online.open());
@@ -93,9 +93,6 @@ export class ArenaController {
     onLanguageChange(() => {
       if (this.ui.current === 'arena') this.render();
     });
-    setInterval(() => {
-      if (this.ui.current === 'arena') this.renderBonus();
-    }, 30_000);
   }
 
   /** Signed in to the server? Otherwise the career on this device is used. */
@@ -119,6 +116,7 @@ export class ArenaController {
     this.audio.unlock();
     if (this.ui.current !== 'arena') this.ui.push('arena');
     this.render(true);
+    this.wheel?.maybePrompt({ rescueOnly: true });
   }
 
   // --- Lobby ---------------------------------------------------------------------------------
@@ -159,23 +157,8 @@ export class ArenaController {
     $('arena-signin').hidden = this.serverMode;
     $('arena-leaderboard').hidden = !this.serverMode;
     $('arena-store').hidden = !this.serverMode;
-    this.renderBonus();
+    this.wheel?.renderChips();
     this.renderCompetitions(center);
-  }
-
-  renderBonus() {
-    const p = this.profile;
-    const btn = $('arena-bonus');
-    const label = $('arena-bonus-text');
-    const offset = this.serverMode ? this.online.net.clockOffset : 0;
-    const wait = (p.bonusAt ?? 0) - (Date.now() + offset);
-    btn.classList.toggle('ready', wait <= 0);
-    btn.disabled = wait > 0;
-    if (wait <= 0) label.textContent = t('account.dailyBonus', { coins: formatCoins(p.dailyBonus ?? 0) });
-    else {
-      const minutes = Math.ceil(wait / 60_000);
-      label.textContent = t('account.bonusIn', { h: Math.floor(minutes / 60), m: minutes % 60 });
-    }
   }
 
   scroll(dir) {
@@ -271,19 +254,6 @@ export class ArenaController {
     this.online.renderMenuBar();
     this.render();
     this.ui.toast(t('arena.avatarSaved'));
-  }
-
-  async claimBonus() {
-    if (this.serverMode) {
-      await this.online.claimBonus();
-      return;
-    }
-    const amount = this.career.claimBonus();
-    if (!amount) return;
-    this.audio.win();
-    this.ui.toast(t('account.bonusClaimed', { coins: amount.toLocaleString() }), 'capture');
-    this.online.renderMenuBar();
-    this.render();
   }
 
   // --- Playing -------------------------------------------------------------------------------
@@ -391,6 +361,7 @@ export class ArenaController {
     this.ui.show('menu');
     this.ui.push('arena');
     this.render(true);
+    this.wheel?.maybePrompt({ rescueOnly: true });
   }
 
   // --- Opponent draw ---------------------------------------------------------------------------

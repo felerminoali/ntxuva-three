@@ -20,6 +20,7 @@ import {
   payoutFor,
   rankTitle,
 } from '../src/competitions.js';
+import { SPIN_SEGMENTS, drawSegment, spinReadyAt } from '../src/spin.js';
 import { Store } from './db.js';
 import { verifyFacebookToken } from './facebook.js';
 import { createAiPool } from './aiPool.js';
@@ -91,6 +92,7 @@ export function createApp(config, { store = new Store(config.dbPath), fetchImpl 
       bonusAt: user.last_bonus_at + BONUS_COOLDOWN_MS,
       storeAt: user.last_store_at + config.storeCooldownSeconds * 1000,
       dailyBonus: config.dailyBonus,
+      spinAt: spinReadyAt(user.last_spin_at, user.coins, config.spinCooldownSeconds * 1000),
       career: {
         aiGames: user.ai_games,
         aiWins: user.ai_wins,
@@ -238,6 +240,22 @@ export function createApp(config, { store = new Store(config.dbPath), fetchImpl 
     });
     pushProfile(userId);
     return { amount: config.dailyBonus };
+  }
+
+  /** Lucky wheel: the server draws the segment, the client only animates it. */
+  function spinWheel(userId) {
+    const user = store.getUser(userId);
+    if (now() < spinReadyAt(user.last_spin_at, user.coins, config.spinCooldownSeconds * 1000)) {
+      throw new ClientError('spin-not-ready');
+    }
+    const segment = drawSegment();
+    const { coins } = SPIN_SEGMENTS[segment];
+    store.transaction(() => {
+      store.adjustCoins(userId, coins, 'lucky-wheel');
+      store.setTimestamp(userId, 'last_spin_at', now());
+    });
+    pushProfile(userId);
+    return { segment, coins, profile: publicProfile(store.getUser(userId)) };
   }
 
   function buyPack(userId, packId) {
@@ -634,6 +652,7 @@ export function createApp(config, { store = new Store(config.dbPath), fetchImpl 
     },
     'bonus.claim': (conn) => claimBonus(requireUser(conn)),
     'store.buy': (conn, { pack }) => buyPack(requireUser(conn), pack),
+    'spin.play': (conn) => spinWheel(requireUser(conn)),
     'ledger.get': (conn) => ({ entries: store.ledger(requireUser(conn)) }),
     'leaderboard.get': () => ({ players: store.leaderboard(20) }),
     'lobby.get': () => ({ lobby: lobbySnapshot() }),

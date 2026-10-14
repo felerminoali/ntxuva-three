@@ -9,6 +9,7 @@ import { actionsFor, actingPlayer, playMove, createGame } from '../src/gameLogic
 import { verifyFacebookToken } from '../server/facebook.js';
 import { TIERS, levelFor, tierBlocker, formatCoins } from '../src/tiers.js';
 import { COMPETITION_BY_ID, matchedSkill, payoutFor } from '../src/competitions.js';
+import { SPIN_SEGMENTS } from '../src/spin.js';
 import { createAiPool } from '../server/aiPool.js';
 import { Store } from '../server/db.js';
 import { DatabaseSync } from 'node:sqlite';
@@ -157,6 +158,20 @@ describe('accounts and wallet', () => {
     expect(profile.coins).toBe(5000 + 1000 + 100_000);
     const { entries } = await c.req('ledger.get');
     expect(entries.map((e) => e.kind)).toEqual(['store-simulated', 'daily-bonus', 'welcome']);
+  });
+
+  it('spins the lucky wheel once per cooldown', async () => {
+    await boot({ startingCoins: 2_000_000 });
+    const c = await client();
+    const { profile } = await c.req('auth.guest', { name: 'Rosa' });
+    expect(profile.spinAt).toBeLessThanOrEqual(Date.now());
+    const spin = await c.req('spin.play');
+    expect(spin.coins).toBe(SPIN_SEGMENTS[spin.segment].coins);
+    expect(spin.profile.coins).toBe(2_000_000 + spin.coins);
+    expect(spin.profile.spinAt).toBeGreaterThan(Date.now());
+    await expect(c.req('spin.play')).rejects.toMatchObject({ code: 'spin-not-ready' });
+    const { entries } = await c.req('ledger.get');
+    expect(entries[0].kind).toBe('lucky-wheel');
   });
 
   it('requires sign-in and enforces tier requirements', async () => {

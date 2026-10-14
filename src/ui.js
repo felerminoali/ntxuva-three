@@ -45,6 +45,41 @@ export class UI {
     const form = $('settings-form');
     form.addEventListener('input', () => this.h.onSettingsChange(this.readSettingsForm()));
     form.addEventListener('change', () => this.h.onSettingsChange(this.readSettingsForm()));
+    $('settings-tabs').addEventListener('click', (e) => {
+      const tab = e.target.closest('button[data-tab]');
+      if (!tab) return;
+      for (const b of $('settings-tabs').children) {
+        b.classList.toggle('on', b === tab);
+        b.setAttribute('aria-selected', String(b === tab));
+      }
+      for (const pane of form.querySelectorAll('[data-pane]')) pane.classList.toggle('on', pane.dataset.pane === tab.dataset.tab);
+    });
+
+    // "⋯" overflow menus collapse secondary lobby actions on small screens.
+    const closeMenus = (except) => {
+      for (const m of document.querySelectorAll('.more-menu.open')) {
+        if (m === except) continue;
+        m.classList.remove('open');
+        m.querySelector('.more-toggle').setAttribute('aria-expanded', 'false');
+      }
+    };
+    for (const menu of document.querySelectorAll('.more-menu')) {
+      const toggle = menu.querySelector('.more-toggle');
+      toggle.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const open = !menu.classList.contains('open');
+        closeMenus(menu);
+        menu.classList.toggle('open', open);
+        toggle.setAttribute('aria-expanded', String(open));
+      });
+      menu.querySelector('.more-pop').addEventListener('click', (e) => {
+        if (e.target.closest('button')) closeMenus();
+      });
+    }
+    document.addEventListener('pointerdown', (e) => {
+      if (!e.target.closest?.('.more-menu')) closeMenus();
+    });
+    this.closeMenus = closeMenus;
 
     $('btn-pause').addEventListener('click', () => this.h.onPause());
     $('btn-history').addEventListener('click', () => this.toggleHistory());
@@ -101,6 +136,7 @@ export class UI {
   render() {
     const top = this.current;
     for (const name of SCREENS) $(`screen-${name}`).hidden = name !== top;
+    this.closeMenus?.();
     const first = top && $(`screen-${top}`).querySelector('button, select, input');
     first?.focus({ preventScroll: true });
   }

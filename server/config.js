@@ -13,6 +13,7 @@ export function loadConfig(env = process.env) {
     turnSeconds: int(env.TURN_SECONDS, 60),
     reconnectSeconds: int(env.RECONNECT_SECONDS, 60),
     maxTimeouts: int(env.MAX_TIMEOUTS, 3),
+    spinCooldownSeconds: int(env.SPIN_COOLDOWN_SECONDS, 4 * 3600),
     storeCooldownSeconds: int(env.STORE_COOLDOWN_SECONDS, 30),
     messagesPerSecond: int(env.MESSAGES_PER_SECOND, 40),
     aiIntroMs: int(env.AI_INTRO_MS, 5000),

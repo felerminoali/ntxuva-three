@@ -67,6 +67,10 @@
         </nav>
 
         <footer class="lobby-foot">
+          <button class="sq-btn labeled gold" id="btn-wheel">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M12 3v18M3 12h18M5.6 5.6l12.8 12.8M18.4 5.6 5.6 18.4" /><circle cx="12" cy="12" r="2.2" /></svg>
+            <span data-i18n="spin.short">Spin</span>
+          </button>
           <button class="sq-btn labeled" data-nav="rules">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5C6.5 4 9.5 4 12 6c2.5-2 5.5-2 8-.5V19c-2.5-1.5-5.5-1.5-8 .5-2.5-2-5.5-2-8-.5zM12 6v13.5" /></svg>
             <span data-i18n="menu.rulesShort">Rules</span>
@@ -159,7 +163,7 @@
             <li>An optional move limit (off by default) can end very long games; the player with more seeds then wins.</li>
           </ul>
         </div>
-        <div class="row">
+        <div class="row panel-foot">
           <button class="btn primary" data-start="tutorial" data-i18n="rules.startTutorial">Start the interactive tutorial</button>
           <button class="btn ghost" data-back data-i18n="common.back">Back</button>
         </div>
@@ -170,14 +174,20 @@
     <section id="screen-settings" class="screen" hidden>
       <div class="panel wide scroll">
         <h2 data-i18n="settings.title">Settings</h2>
-        <form id="settings-form" class="settings" onsubmit="return false">
-          <fieldset>
+        <div class="tabs" id="settings-tabs" role="tablist">
+          <button type="button" role="tab" class="on" data-tab="sound" data-i18n="settings.sound">Sound</button>
+          <button type="button" role="tab" data-tab="language" data-i18n="lang.label">Language</button>
+          <button type="button" role="tab" data-tab="graphics" data-i18n="settings.graphics">Graphics</button>
+          <button type="button" role="tab" data-tab="game" data-i18n="settings.gameTab">Game</button>
+        </div>
+        <form id="settings-form" class="settings tabbed" onsubmit="return false">
+          <fieldset data-pane="sound" class="on">
             <legend data-i18n="settings.sound">Sound</legend>
             <label class="toggle"><input type="checkbox" name="sound" /> <span data-i18n="settings.soundEffects">Sound effects</span></label>
             <label class="toggle"><input type="checkbox" name="music" /> <span data-i18n="settings.music">Background music</span></label>
             <label><span data-i18n="settings.volume">Volume</span> <input type="range" name="volume" min="0" max="1" step="0.05" /></label>
           </fieldset>
-          <fieldset>
+          <fieldset data-pane="language">
             <legend data-i18n="lang.label">Language</legend>
             <label><span data-i18n="lang.label">Language</span>
               <select name="language">
@@ -186,7 +196,7 @@
               </select>
             </label>
           </fieldset>
-          <fieldset>
+          <fieldset data-pane="graphics">
             <legend data-i18n="settings.graphics">Graphics</legend>
             <label><span data-i18n="scenario.label">Scenery</span>
               <select name="scenario">
@@ -215,7 +225,7 @@
             <label class="toggle"><input type="checkbox" name="showHints" /> <span data-i18n="settings.showHints">Highlight playable bins</span></label>
             <label class="toggle"><input type="checkbox" name="cameraFollow" /> <span data-i18n="settings.cameraFollow">Turn the view toward the player to move (two-player mode)</span></label>
           </fieldset>
-          <fieldset>
+          <fieldset data-pane="game">
             <legend data-i18n="settings.game">Game (applies to new games)</legend>
             <label><span data-i18n="settings.boardSize">Board size</span>
               <select name="columns">
@@ -237,7 +247,7 @@
             </label>
           </fieldset>
         </form>
-        <button class="btn ghost" data-back data-i18n="common.back">Back</button>
+        <div class="panel-foot"><button class="btn ghost" data-back data-i18n="common.back">Back</button></div>
       </div>
     </section>
 
@@ -266,7 +276,7 @@
           <a href="/privacy" target="_blank" rel="noopener" data-i18n="about.privacy">Privacy Policy</a> ·
           <a href="/term-of-use" target="_blank" rel="noopener" data-i18n="about.terms">Terms of Use</a>
         </p>
-        <button class="btn ghost" data-back data-i18n="common.back">Back</button>
+        <div class="panel-foot"><button class="btn ghost" data-back data-i18n="common.back">Back</button></div>
       </div>
     </section>
 
@@ -292,6 +302,11 @@
     <!-- Online: lobby -->
     <section id="screen-online" class="screen" hidden>
       <div class="panel wide scroll lobby-panel">
+        <div class="lobby-head lobby-top">
+          <button class="btn back" data-back aria-label="Back" data-i18n-aria="common.back"></button>
+          <h2 data-i18n="online.title">Online rooms</h2>
+          <span class="online-pill" id="online-count"></span>
+        </div>
         <div class="profile-card">
           <div class="avatar-frame">
             <div class="avatar" id="profile-avatar" aria-hidden="true"></div>
@@ -309,9 +324,15 @@
         <div class="chip-row account-actions">
           <button class="chip gift" id="online-bonus"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11h16v9H4zM3 7h18v4H3zM12 7v13M12 7c-2-4-6-4-6-1.5S10 7 12 7zm0 0c2-4 6-4 6-1.5S14 7 12 7z" /></svg><span id="online-bonus-text"></span></button>
           <button class="chip" id="online-leaderboard"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4h8v5a4 4 0 0 1-8 0zM8 6H4.5c0 3 1.5 4.5 3.7 4.8M16 6h3.5c0 3-1.5 4.5-3.7 4.8M12 13v4M8 20h8l-1-3H9z" /></svg><span data-i18n="account.leaderboard">Leaderboard</span></button>
-          <button class="chip" id="online-rename"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16zM13.5 6.5l4 4" /></svg><span data-i18n="account.rename">Rename</span></button>
-          <button class="chip fb" id="online-facebook"><span class="fb-logo" aria-hidden="true">f</span> <span data-i18n="account.facebookConnect">Connect Facebook</span></button>
-          <button class="chip ghost" id="online-signout"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 4H5v16h5M14 8l4 4-4 4M18 12H9" /></svg><span data-i18n="account.signout">Sign out</span></button>
+          <div class="more-menu">
+            <button class="chip more-toggle" aria-expanded="false" aria-label="More" data-i18n-aria="common.more"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h.01M12 12h.01M19 12h.01" /></svg></button>
+            <div class="more-pop">
+              <button class="chip" id="online-rename"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16zM13.5 6.5l4 4" /></svg><span data-i18n="account.rename">Rename</span></button>
+              <button class="chip fb" id="online-facebook"><span class="fb-logo" aria-hidden="true">f</span> <span data-i18n="account.facebookConnect">Connect Facebook</span></button>
+              <button class="chip ghost" id="online-signout"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 4H5v16h5M14 8l4 4-4 4M18 12H9" /></svg><span data-i18n="account.signout">Sign out</span></button>
+              <p class="note more-note" data-i18n="online.captureNote">You are only matched with players who chose the same rule.</p>
+            </div>
+          </div>
         </div>
         <fieldset class="capture-choice">
           <legend data-i18n="online.captureRule">Capture rule for this game</legend>
@@ -321,18 +342,11 @@
           </div>
           <p class="note" data-i18n="online.captureNote">You are only matched with players who chose the same rule.</p>
         </fieldset>
-        <div class="lobby-head">
-          <h2 data-i18n="online.title">Online rooms</h2>
-          <span class="online-pill" id="online-count"></span>
-        </div>
         <p class="status-line" id="online-status" aria-live="polite"></p>
         <div class="carousel">
           <button class="car-arrow prev" id="tier-prev" aria-label="Previous room" data-i18n-aria="online.prevRoom">‹</button>
           <ol class="tier-list" id="tier-list"></ol>
           <button class="car-arrow next" id="tier-next" aria-label="Next room" data-i18n-aria="online.nextRoom">›</button>
-        </div>
-        <div class="sheet-actions start">
-          <button class="btn back" data-back aria-label="Back" data-i18n-aria="common.back"></button>
         </div>
       </div>
     </section>
@@ -340,6 +354,10 @@
     <!-- vs Computer: competitions -->
     <section id="screen-arena" class="screen" hidden>
       <div class="panel wide scroll lobby-panel arena-panel">
+        <div class="lobby-head lobby-top">
+          <button class="btn back" data-back aria-label="Back" data-i18n-aria="common.back"></button>
+          <h2 data-i18n="arena.title">Competitions</h2>
+        </div>
         <div class="profile-card">
           <button class="avatar-frame avatar-edit" id="arena-avatar-btn" title="Change photo" data-i18n-title="arena.changePhoto" aria-label="Change photo" data-i18n-aria="arena.changePhoto">
             <span class="avatar" id="arena-avatar" aria-hidden="true"></span>
@@ -358,9 +376,15 @@
         <div class="chip-row account-actions">
           <button class="chip gift" id="arena-bonus"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11h16v9H4zM3 7h18v4H3zM12 7v13M12 7c-2-4-6-4-6-1.5S10 7 12 7zm0 0c2-4 6-4 6-1.5S14 7 12 7z" /></svg><span id="arena-bonus-text"></span></button>
           <button class="chip" id="arena-store"><span class="coin" aria-hidden="true"></span><span data-i18n="account.store">Get coins</span></button>
-          <button class="chip" id="arena-leaderboard"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4h8v5a4 4 0 0 1-8 0zM8 6H4.5c0 3 1.5 4.5 3.7 4.8M16 6h3.5c0 3-1.5 4.5-3.7 4.8M12 13v4M8 20h8l-1-3H9z" /></svg><span data-i18n="account.leaderboard">Leaderboard</span></button>
-          <button class="chip" id="arena-rename"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16zM13.5 6.5l4 4" /></svg><span data-i18n="account.rename">Rename</span></button>
-          <button class="chip fb" id="arena-signin"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4h5v16h-5M10 8l-4 4 4 4M6 12h9" /></svg><span data-i18n="arena.signin">Sign in to save online</span></button>
+          <div class="more-menu">
+            <button class="chip more-toggle" aria-expanded="false" aria-label="More" data-i18n-aria="common.more"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h.01M12 12h.01M19 12h.01" /></svg></button>
+            <div class="more-pop">
+              <button class="chip" id="arena-leaderboard"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4h8v5a4 4 0 0 1-8 0zM8 6H4.5c0 3 1.5 4.5 3.7 4.8M16 6h3.5c0 3-1.5 4.5-3.7 4.8M12 13v4M8 20h8l-1-3H9z" /></svg><span data-i18n="account.leaderboard">Leaderboard</span></button>
+              <button class="chip" id="arena-rename"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16zM13.5 6.5l4 4" /></svg><span data-i18n="account.rename">Rename</span></button>
+              <button class="chip fb" id="arena-signin"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4h5v16h-5M10 8l-4 4 4 4M6 12h9" /></svg><span data-i18n="arena.signin">Sign in to save online</span></button>
+              <p class="note more-note" data-i18n="arena.note">Opponents are computer players drawn at random, from relaxed up to your level (skill 1–20). Win to take twice the entry.</p>
+            </div>
+          </div>
         </div>
         <fieldset class="capture-choice">
           <legend data-i18n="online.captureRule">Capture rule for this game</legend>
@@ -369,18 +393,12 @@
             <label class="seg-opt"><input type="radio" name="arena-rule" value="extra" /> <span data-i18n="online.captureExtra">Column + one extra bin of my choice</span></label>
           </div>
         </fieldset>
-        <div class="lobby-head">
-          <h2 data-i18n="arena.title">Competitions</h2>
-        </div>
         <div class="carousel">
           <button class="car-arrow prev" id="comp-prev" aria-label="Previous" data-i18n-aria="online.prevRoom">‹</button>
           <ol class="tier-list" id="comp-list"></ol>
           <button class="car-arrow next" id="comp-next" aria-label="Next" data-i18n-aria="online.nextRoom">›</button>
         </div>
-        <p class="note" data-i18n="arena.note">Opponents are computer players drawn at random, from relaxed up to your level (skill 1–20). Win to take twice the entry.</p>
-        <div class="sheet-actions start">
-          <button class="btn back" data-back aria-label="Back" data-i18n-aria="common.back"></button>
-        </div>
+        <p class="note arena-note" data-i18n="arena.note">Opponents are computer players drawn at random, from relaxed up to your level (skill 1–20). Win to take twice the entry.</p>
       </div>
     </section>
 
@@ -597,6 +615,25 @@
         </div>
       </div>
     </section>
+
+    <!-- Lucky wheel (opens over any screen) -->
+    <div id="spin-modal" class="spin-modal" role="dialog" aria-modal="true" aria-labelledby="spin-title" hidden>
+      <div class="spin-card">
+        <button class="spin-close" id="spin-close" aria-label="Close" data-i18n-aria="common.close">×</button>
+        <h2 id="spin-title" data-i18n="spin.title">Lucky wheel</h2>
+        <p class="note" id="spin-sub"></p>
+        <div class="wheel-wrap">
+          <span class="wheel-pointer" aria-hidden="true"></span>
+          <svg class="wheel" viewBox="-100 -100 200 200" aria-hidden="true">
+            <circle class="wheel-rim" r="98" />
+            <g id="spin-rotor" class="wheel-rotor"></g>
+          </svg>
+          <button class="wheel-hub" id="spin-hub" data-i18n="spin.go">GO</button>
+        </div>
+        <p class="spin-result" id="spin-result" aria-live="polite"></p>
+        <button class="btn primary big" id="spin-btn" data-i18n="spin.spin">Spin</button>
+      </div>
+    </div>
 
     <div id="toasts" class="toasts" aria-live="assertive"></div>
 
