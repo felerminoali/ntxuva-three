@@ -14,6 +14,7 @@ import { GameSession } from './game.js';
 import { createGame } from './gameLogic.js';
 import { loadSettings, saveSettings } from './settings.js';
 import { OnlineController } from './online.js';
+import { ArenaController } from './arena.js';
 import { applyTranslations, getLanguage, setLanguage } from './i18n.js';
 
 let settings = loadSettings();
@@ -30,6 +31,9 @@ pieces.setBoard(board);
 
 let session;
 let online;
+let arena;
+// Hooks of the running server/device match (competitions supply their own).
+const link = () => session.onlineLink ?? {};
 const ui = new UI({
   inGame: () => session.inGame,
   onStart: (mode, opts) => {
@@ -46,16 +50,18 @@ const ui = new UI({
   onResume: () => session.resume(),
   onRestart: () => {
     audio.unlock();
-    if (session.mode === 'online') online.playAgain();
+    if (session.mode === 'online') (link().playAgain ?? (() => online.playAgain()))();
     else session.restart();
   },
   onResign: async () => {
-    if (await online.resign()) session.resume();
+    const resign = link().resign ?? (() => online.resign());
+    if (await resign()) session.resume();
   },
   onMainMenu: async () => {
     if (session.mode === 'online') {
-      if (!(await online.confirmLeave())) return;
-      online.backToLobby();
+      const { confirmLeave = () => online.confirmLeave(), backToLobby = () => online.backToLobby() } = link();
+      if (!(await confirmLeave())) return;
+      backToLobby();
       return;
     }
     session.exitToMenu();
@@ -76,6 +82,15 @@ online = new OnlineController({
   getSettings: () => settings,
   saveSettings: (changes) => applySettings(changes),
 });
+arena = new ArenaController({
+  ui,
+  session,
+  audio,
+  online,
+  getSettings: () => settings,
+  saveSettings: (changes) => applySettings(changes),
+});
+document.getElementById('btn-arena').addEventListener('click', () => arena.open());
 document.getElementById('btn-online').addEventListener('click', () => {
   audio.unlock();
   online.open();
@@ -86,7 +101,8 @@ document.getElementById('menu-profile').addEventListener('click', () => {
 });
 document.getElementById('menu-coins').addEventListener('click', () => {
   audio.unlock();
-  online.openStore();
+  if (online.profile) online.openStore();
+  else arena.open();
 });
 
 function applySettings(changes = {}, initial = false) {
@@ -150,4 +166,4 @@ online.renderMenuBar();
 online.autoResume();
 
 // Exposed for debugging and automated smoke tests.
-window.__ntuxa = { session, stage, board, pieces, ui, online, audio, get settings() { return settings; } };
+window.__ntuxa = { session, stage, board, pieces, ui, online, arena, audio, get settings() { return settings; } };

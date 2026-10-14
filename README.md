@@ -48,13 +48,36 @@ The board has 4 rows. Each player owns the two rows nearest to them: an **outer 
 |---|---|
 | **Online** | Play a real person over the internet for virtual coins (see below). |
 | **Local 2-player** | Two people take turns on the same device. Undo is available. |
-| **vs Computer** | Easy, Medium or Hard AI; you can play as South or North. |
+| **vs Computer (Competitions)** | A lobby of staked competitions against computer players who feel like real people (see below). A **Friendly** card keeps the classic free game: Easy, Medium or Hard AI, playing as South or North. |
 | **Practice** | Free play for both sides, with a **Hint** button that shows the AI's suggested move and a preview of where the sowing would finish. |
 | **Tutorial** | 8 guided steps on a small 4 × 8 board, covering the objective, sowing, relay, capture, the optional extra bin, and phases 1 and 2. |
 
+## Competitions against the computer
+
+The **vs Computer** tile opens a lobby with your career card and a carousel of competitions. Each competition is a one-to-one game in a Mozambican city. You pay the entry; a win pays **twice the entry**, a draw refunds it, and a loss or resignation loses it.
+
+| Competition | Entry | Computer skill (1–20) |
+|---|---|---|
+| Cuamba | 1M | 1–6 |
+| Nampula | 5M | 2–8 |
+| Quelimane | 10M | 3–10 |
+| Tete | 25M | 5–12 |
+| Chimoio | 50M | 6–13 |
+| Pemba | 100M | 8–15 |
+| Beira | 250M | 10–16 |
+| Xai-Xai | 500M | 12–18 |
+| Matola | 1B | 14–19 |
+| Cidade de Maputo | 2B | 16–20 |
+
+- **Unlocking:** a competition is open once you can pay its entry. You begin with **2M coins**, so Cuamba is the first step, and the winnings from it take you to Nampula and beyond.
+- **Opponent draw:** when you enter, an animated roulette draws an opponent with a Mozambican name. Their skill is a random integer from the competition's lowest skill up to the skill that matches your rating. Some games are relaxed and others are fully matched, as when you meet different people at the table. Higher skills search deeper and make fewer random choices.
+- **Career:** the database keeps each player's avatar (which you can upload), coins, rating with a rank title (Novice up to Grandmaster), games, wins and losses, win rate, total winnings, tournaments won (one trophy per competition victory) and leaderboard position.
+- **Storage:** signed in, the career is saved on the server (SQLite) and the server runs the computer player. Not signed in, everything runs and is saved on the device (`localStorage`), which works even on a static host such as Vercel. A device player gets a 1M refill every 20 hours, or right away when below 1M. Leaving an unfinished competition counts as a loss.
+- The capture rule (column only, or column plus extra bin) is chosen in the lobby.
+
 ## Online play, coins and rooms
 
-- **Sign in** as a guest (just a name) or with **Facebook**. The profile (name, photo, coins, level, rating, wins and losses) is stored on the server; connecting Facebook to a guest profile keeps it across devices. New players start with **5,000 coins**.
+- **Sign in** as a guest (just a name) or with **Facebook**. The profile (name, photo, coins, level, rating, wins and losses) is stored on the server; connecting Facebook to a guest profile keeps it across devices. New players start with **2,000,000 coins**.
 - **Rooms:** every one-to-one game takes place in a Mozambican district or city. Both players pay the stake and the winner takes the pot (a draw refunds both). Higher stakes take you to more important places, up to the provincial capitals and finally **Cidade de Maputo**:
 
   | Stake | Rooms |
@@ -80,7 +103,10 @@ The server (`server/index.js`) uses environment variables:
 | `DB_PATH` | `server/data/ntuxa.db` | SQLite database file |
 | `FACEBOOK_APP_ID` | — | Enables "Continue with Facebook" (create an app at developers.facebook.com and add your site's domain) |
 | `FACEBOOK_APP_SECRET` | — | Optional; enables stricter token verification via `debug_token` |
-| `STARTING_COINS` | `5000` | Coins for new players |
+| `STARTING_COINS` | `2000000` | Coins for new players |
+| `AI_INTRO_MS` | `5000` | Pause before a competition starts (covers the opponent draw) |
+| `AI_MIN_THINK_MS` | `350` | Minimum "thinking" time of a computer player |
+| `AI_WORKERS` | `1` | Worker threads that compute computer moves |
 | `DAILY_BONUS` | `1000` | Daily bonus amount |
 | `RAKE_PERCENT` | `0` | House cut of each pot |
 | `TURN_SECONDS` | `60` | Turn clock (`0` disables it) |
@@ -166,6 +192,9 @@ src/
   describe.js         translated player names, move descriptions and illegal-move messages
   music.js            generative timbila-style fallback music (Web Audio)
   tiers.js            online rooms (stakes, places, levels) and store packs, shared with the server
+  competitions.js     competitions vs computer: ladder, 1-20 skills, opponent draw, Elo, payouts, bot names (shared with the server)
+  arena.js            competition lobby, career card, avatar upload and the opponent-draw roulette
+  arenaLocal.js       device career (localStorage) and the in-browser competition engine
   net.js              WebSocket client: requests, pushes, reconnection, server clock offset
   online.js           sign-in, lobby, store, leaderboard, matchmaking, online game bridge
   facebook.js         loads the Facebook SDK on demand and logs in
@@ -173,14 +202,17 @@ src/
 server/
   index.js            entry point (npm run server)
   app.js              HTTP + WebSocket server: accounts, wallet, matchmaking, authoritative games
-  db.js               SQLite storage (users, sessions, coin ledger, games, ratings)
+  db.js               SQLite storage (users, sessions, coin ledger, games, ratings, competition careers)
+  aiPool.js           worker-thread pool that computes computer moves off the event loop
+  aiWorker.js         worker thread running the AI at a given skill
   facebook.js         Facebook access-token verification (Graph API)
   config.js           environment configuration
   dev.js              runs the server and Vite together (npm run dev:online)
 tests/
   gameLogic.test.js   rules: setup, sowing, relay, captures, extra bin option, phases, game end
   ai.test.js          the AI only returns legal actions, takes wins, and full AI-vs-AI games
-  server.test.js      accounts, wallet, Facebook verification, matchmaking, legality, payouts, timeouts, reconnects
+  server.test.js      accounts, wallet, Facebook verification, matchmaking, legality, payouts, timeouts, reconnects, competitions
+  competitions.test.js  ladder, skill draw, Elo, payouts and skill-limited AI
   helpers.js          deterministic RNG for the tests
 ```
 

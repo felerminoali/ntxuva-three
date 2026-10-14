@@ -13,10 +13,23 @@ import { extname, join, normalize, resolve } from 'node:path';
 import { WebSocketServer } from 'ws';
 import { createGame, applyAction, actionsFor, actingPlayer, STATUS, SOUTH, NORTH } from '../src/gameLogic.js';
 import { TIERS, TIER_BY_ID, STORE_PACKS, levelFor, xpForLevel, experience, tierBlocker } from '../src/tiers.js';
+import {
+  COMPETITION_BY_ID,
+  competitionBlocker,
+  drawOpponent,
+  payoutFor,
+  rankTitle,
+} from '../src/competitions.js';
 import { Store } from './db.js';
 import { verifyFacebookToken } from './facebook.js';
+import { createAiPool } from './aiPool.js';
 
 const BONUS_COOLDOWN_MS = 20 * 60 * 60 * 1000;
+/** Player slot used for computer opponents in competition games. */
+const BOT_ID = 0;
+const AVATAR_MAX = 12_000;
+const AVATAR_RE = /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/;
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const MIME = {
   '.html': 'text/html; charset=utf-8',
   '.js': 'text/javascript; charset=utf-8',
@@ -46,7 +59,8 @@ export function sanitizeName(raw, fallback) {
   return name.length >= 2 ? name : fallback;
 }
 
-export function createApp(config, { store = new Store(config.dbPath), fetchImpl = fetch, log = () => {} } = {}) {
+export function createApp(config, { store = new Store(config.dbPath), fetchImpl = fetch, log = () => {}, aiPool } = {}) {
+  aiPool ??= createAiPool({ size: config.aiWorkers ?? 1, log });
   const conns = new Set();
   const userConns = new Map(); // userId -> Set<conn>
   const queues = new Map(); // `${tier}|${extra}` -> [{userId, since}]
@@ -77,7 +91,24 @@ export function createApp(config, { store = new Store(config.dbPath), fetchImpl 
       bonusAt: user.last_bonus_at + BONUS_COOLDOWN_MS,
       storeAt: user.last_store_at + config.storeCooldownSeconds * 1000,
       dailyBonus: config.dailyBonus,
+      career: {
+        aiGames: user.ai_games,
+        aiWins: user.ai_wins,
+        aiLosses: user.ai_losses,
+        aiDraws: user.ai_draws,
+        aiRating: user.ai_rating,
+        winnings: user.winnings,
+        tournaments: user.tournaments,
+        trophies: store.trophies(user.id),
+        rank: store.rankOf(user),
+        rankTitle: rankTitle(user.ai_rating),
+      },
     };
+  }
+
+  function botView(bot) {
+    const { id, name, avatar, skill, rating, games, wins, level } = bot;
+    return { id, name, avatar, bot: true, facebook: false, skill, rating, games, wins, level };
   }
 
   function opponentView(user) {
@@ -109,7 +140,7 @@ export function createApp(config, { store = new Store(config.dbPath), fetchImpl 
       waiting[tier] = (waiting[tier] ?? 0) + list.length;
     }
     const playing = {};
-    for (const m of matches.values()) if (!m.over) playing[m.tier.id] = (playing[m.tier.id] ?? 0) + 2;
+    for (const m of matches.values()) if (!m.over && !m.bot) playing[m.tier.id] = (playing[m.tier.id] ?? 0) + 2;
     return { online: userConns.size, waiting, playing };
   }
 
@@ -182,7 +213,8 @@ export function createApp(config, { store = new Store(config.dbPath), fetchImpl 
     );
     let user = store.getUserByFacebook(fb.fbId);
     if (user) {
-      user = store.updateProfile(user.id, { avatar: fb.avatar });
+      // Keep a picture the player uploaded; otherwise refresh the Facebook one.
+      if (!user.avatar?.startsWith('data:')) user = store.updateProfile(user.id, { avatar: fb.avatar });
     } else if (conn.userId && !store.getUser(conn.userId).fb_id) {
       // Link the guest account the player is currently using, keeping its coins and stats.
       user = store.updateProfile(conn.userId, { fbId: fb.fbId, name: fb.name, avatar: fb.avatar });
@@ -272,14 +304,95 @@ export function createApp(config, { store = new Store(config.dbPath), fetchImpl 
       gameId: match.id,
       side,
       tier: match.tier.id,
+      competition: match.competition?.id ?? null,
       stake: match.tier.stake,
       extraCapture: match.extraCapture,
-      opponent: opponentView(store.getUser(match.players[1 - side])),
-      opponentConnected: online(match.players[1 - side]),
+      opponent: match.bot ? botView(match.bot) : opponentView(store.getUser(match.players[1 - side])),
+      opponentConnected: match.bot ? true : online(match.players[1 - side]),
       state: match.state,
       deadline: match.deadline,
       history: match.records,
     };
+  }
+
+  /** Starts a competition game against a computer player drawn for the user's rating. */
+  function startCompetition(userId, competitionId, extraCapture) {
+    if (userMatch.has(userId)) throw new ClientError('in-game');
+    const competition = COMPETITION_BY_ID[competitionId];
+    const user = store.getUser(userId);
+    const blocker = competitionBlocker(competition, user);
+    if (blocker) throw new ClientError(blocker);
+    leaveQueues(userId);
+    const bot = drawOpponent(competition, user.ai_rating);
+    const humanSide = Math.random() < 0.5 ? SOUTH : NORTH;
+    const players = humanSide === SOUTH ? [userId, BOT_ID] : [BOT_ID, userId];
+    const id = randomUUID();
+    store.transaction(() => {
+      store.adjustCoins(userId, -competition.stake, 'competition-stake', id);
+      store.recordGameStart({
+        id,
+        tier: competition.id,
+        stake: competition.stake,
+        extraCapture,
+        southId: players[0],
+        northId: players[1],
+        kind: 'competition',
+        bot: JSON.stringify({ name: bot.name, skill: bot.skill, rating: bot.rating }),
+      });
+    });
+    const match = {
+      id,
+      tier: { id: competition.id, stake: competition.stake },
+      competition,
+      bot,
+      botSide: 1 - humanSide,
+      // Both clocks wait while the client shows the opponent draw.
+      startsAt: now() + config.aiIntroMs,
+      extraCapture: !!extraCapture,
+      players,
+      state: createGame({ columns: config.columns, extraCapture: !!extraCapture }),
+      moves: [],
+      records: [],
+      timeouts: [0, 0],
+      disconnectTimers: [null, null],
+      turnTimer: null,
+      botTimer: null,
+      deadline: 0,
+      over: false,
+    };
+    matches.set(id, match);
+    userMatch.set(userId, id);
+    pushProfile(userId);
+    armClock(match);
+    sendUser(userId, matchStartMessage(match, userId));
+    log(`competition ${id} ${competition.id} user ${userId} vs ${bot.name} (skill ${bot.skill})`);
+    return { matched: true, gameId: id, side: humanSide, opponent: botView(bot) };
+  }
+
+  /** Plays the computer's move after a short, human-like pause. */
+  function scheduleBot(match) {
+    clearTimeout(match.botTimer);
+    const ply = match.moves.length;
+    const wait = Math.max(0, (match.startsAt ?? 0) - now());
+    match.botTimer = setTimeout(async () => {
+      if (match.over || match.moves.length !== ply) return;
+      const started = now();
+      let action = null;
+      try {
+        action = await aiPool.choose(match.state, match.bot.skill);
+      } catch (err) {
+        if (!match.over) log(`AI search failed: ${err.message}`);
+      }
+      if (match.over || match.moves.length !== ply) return;
+      const legal = actionsFor(match.state);
+      if (!action || !legal.some((a) => a.type === action.type && a.bin === action.bin)) {
+        action = legal[Math.floor(Math.random() * legal.length)];
+      }
+      const rest = config.aiMinThinkMs - (now() - started);
+      if (rest > 0) await sleep(rest);
+      if (match.over || match.moves.length !== ply) return;
+      applyMatchAction(match, match.botSide, action);
+    }, wait);
   }
 
   function startMatch(tier, extraCapture, firstUserId, secondUserId) {
@@ -321,9 +434,16 @@ export function createApp(config, { store = new Store(config.dbPath), fetchImpl 
 
   function armClock(match) {
     clearTimeout(match.turnTimer);
-    if (match.over || !config.turnSeconds) return;
-    match.deadline = now() + config.turnSeconds * 1000;
-    match.turnTimer = setTimeout(() => onTimeout(match), config.turnSeconds * 1000);
+    if (match.over) return;
+    if (match.bot && actingPlayer(match.state) === match.botSide) {
+      match.deadline = 0;
+      scheduleBot(match);
+      return;
+    }
+    if (!config.turnSeconds) return;
+    const ms = Math.max(0, (match.startsAt ?? 0) - now()) + config.turnSeconds * 1000;
+    match.deadline = now() + ms;
+    match.turnTimer = setTimeout(() => onTimeout(match), ms);
   }
 
   function onTimeout(match) {
@@ -386,7 +506,12 @@ export function createApp(config, { store = new Store(config.dbPath), fetchImpl 
     if (match.over) return;
     match.over = true;
     clearTimeout(match.turnTimer);
+    clearTimeout(match.botTimer);
     match.disconnectTimers.forEach((t) => clearTimeout(t));
+    if (match.bot) {
+      endCompetition(match, winnerSide, reason);
+      return;
+    }
     const pot = match.tier.stake * 2;
     const rake = Math.floor((pot * config.rakePercent) / 100);
     let ratingDelta = 0;
@@ -395,6 +520,7 @@ export function createApp(config, { store = new Store(config.dbPath), fetchImpl 
         for (const uid of match.players) store.adjustCoins(uid, match.tier.stake, 'refund', match.id);
       } else {
         store.adjustCoins(match.players[winnerSide], pot - rake, 'win', match.id);
+        store.addWinnings(match.players[winnerSide], pot - rake);
       }
       ratingDelta = store.recordResult(match.players[0], match.players[1], winnerSide ?? null);
       store.recordGameEnd({
@@ -425,6 +551,47 @@ export function createApp(config, { store = new Store(config.dbPath), fetchImpl 
     // Keep finished matches briefly for late messages, then forget them.
     setTimeout(() => matches.delete(match.id), 60_000).unref?.();
     broadcastLobby();
+  }
+
+  /** Settles a competition game: the house pays twice the entry to a winner. */
+  function endCompetition(match, winnerSide, reason) {
+    const humanSide = 1 - match.botSide;
+    const uid = match.players[humanSide];
+    const draw = winnerSide === null || winnerSide === undefined;
+    const outcome = draw ? 'draw' : winnerSide === humanSide ? 'win' : 'loss';
+    const payout = payoutFor(match.competition, outcome);
+    let ratingDelta = 0;
+    store.transaction(() => {
+      if (payout) store.adjustCoins(uid, payout, draw ? 'refund' : 'competition-win', match.id);
+      ratingDelta = store.recordCompetitionResult(uid, {
+        opponentRating: match.bot.rating,
+        score: outcome === 'win' ? 1 : outcome === 'draw' ? 0.5 : 0,
+        competition: match.competition.id,
+        winnings: outcome === 'win' ? payout : 0,
+      });
+      store.recordGameEnd({
+        id: match.id,
+        winnerId: draw ? null : match.players[winnerSide],
+        reason,
+        turns: match.state.turn,
+        moves: match.moves,
+      });
+    });
+    userMatch.delete(uid);
+    sendUser(uid, {
+      t: 'game.over',
+      gameId: match.id,
+      winner: draw ? null : winnerSide,
+      reason,
+      payout,
+      stake: match.tier.stake,
+      ratingDelta,
+      competition: match.competition.id,
+      state: match.state,
+      profile: publicProfile(store.getUser(uid)),
+    });
+    log(`competition ${match.id} over: ${outcome} (${reason})`);
+    setTimeout(() => matches.delete(match.id), 60_000).unref?.();
   }
 
   // --- Message dispatch ------------------------------------------------------------------
@@ -472,6 +639,17 @@ export function createApp(config, { store = new Store(config.dbPath), fetchImpl 
     'lobby.get': () => ({ lobby: lobbySnapshot() }),
     'queue.join': (conn, { tier, extraCapture }) => joinQueue(requireUser(conn), tier, extraCapture),
     'queue.leave': (conn) => ({ left: leaveQueues(requireUser(conn)) }),
+    'competition.join': (conn, { competition, extraCapture }) =>
+      startCompetition(requireUser(conn), competition, extraCapture),
+    'profile.avatar': (conn, { avatar }) => {
+      const userId = requireUser(conn);
+      if (avatar !== null && (typeof avatar !== 'string' || avatar.length > AVATAR_MAX || !AVATAR_RE.test(avatar))) {
+        throw new ClientError('bad-avatar');
+      }
+      store.updateProfile(userId, { avatar });
+      pushProfile(userId);
+      return { profile: publicProfile(store.getUser(userId)) };
+    },
     'game.action': (conn, { gameId, action }) => gameAction(requireUser(conn), gameId, action),
     'game.resign': (conn, { gameId }) => {
       const userId = requireUser(conn);
@@ -572,7 +750,7 @@ export function createApp(config, { store = new Store(config.dbPath), fetchImpl 
     createReadStream(file).pipe(res);
   });
 
-  const wss = new WebSocketServer({ server: httpServer, path: '/ws', maxPayload: 16 * 1024 });
+  const wss = new WebSocketServer({ server: httpServer, path: '/ws', maxPayload: 32 * 1024 });
   wss.on('connection', (ws) => {
     const conn = { ws, userId: null, token: null, windowStart: 0, count: 0, alive: true };
     conns.add(conn);
@@ -610,8 +788,10 @@ export function createApp(config, { store = new Store(config.dbPath), fetchImpl 
       clearInterval(heartbeat);
       for (const m of matches.values()) {
         clearTimeout(m.turnTimer);
+        clearTimeout(m.botTimer);
         m.disconnectTimers.forEach((t) => clearTimeout(t));
       }
+      await aiPool.close();
       for (const c of conns) c.ws.terminate();
       await new Promise((res) => wss.close(() => res()));
       await new Promise((res) => httpServer.close(() => res()));

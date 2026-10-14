@@ -4,6 +4,7 @@
  * - easy:   mostly greedy one-ply play with frequent random choices.
  * - medium: shallow minimax with alpha-beta pruning.
  * - hard:   iterative-deepening minimax with alpha-beta pruning and a time budget.
+ * - skill 1-20 (competitions): a smooth scale between those, see `skillConfig`.
  *
  * Every candidate comes from the rules engine (`actionsFor`), so the AI can only make legal moves.
  */
@@ -14,6 +15,21 @@ export const DIFFICULTIES = Object.freeze({
   medium: { maxDepth: 3, timeMs: 700, randomness: 0 },
   hard: { maxDepth: 12, timeMs: 1800, randomness: 0 },
 });
+
+const SKILL_DEPTHS = [1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 4, 4, 5, 6, 7, 8, 9, 10, 12];
+
+/**
+ * Search settings for a skill level on the 1-20 competition scale: low levels often play a
+ * random legal move and look one move ahead; level 20 matches "hard".
+ */
+export function skillConfig(skill) {
+  const s = Math.max(1, Math.min(20, Math.round(skill)));
+  return {
+    maxDepth: SKILL_DEPTHS[s - 1],
+    timeMs: 120 + (s - 1) * 90,
+    randomness: s >= 12 ? 0 : Number((0.5 - (s - 1) * 0.045).toFixed(3)),
+  };
+}
 
 const WIN = 1_000_000;
 const EXTRA_BRANCH_LIMIT = 4;
@@ -83,10 +99,11 @@ function minimax(state, depth, alpha, beta, me, deadline, counter) {
 
 /**
  * Picks an action for the player who must act in `state`.
+ * `difficulty` is 'easy' | 'medium' | 'hard' or a competition skill level from 1 to 20.
  * @returns {{type:'move'|'extra', bin:number}|null}
  */
 export function chooseAction(state, { difficulty = 'medium', rng = Math.random, timeMs, maxDepth } = {}) {
-  const config = DIFFICULTIES[difficulty] ?? DIFFICULTIES.medium;
+  const config = typeof difficulty === 'number' ? skillConfig(difficulty) : DIFFICULTIES[difficulty] ?? DIFFICULTIES.medium;
   const me = actingPlayer(state);
   if (me === null) return null;
   const actions = actionsFor(state);

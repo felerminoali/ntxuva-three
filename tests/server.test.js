@@ -8,6 +8,13 @@ import { loadConfig } from '../server/config.js';
 import { actionsFor, actingPlayer, playMove, createGame } from '../src/gameLogic.js';
 import { verifyFacebookToken } from '../server/facebook.js';
 import { TIERS, levelFor, tierBlocker, formatCoins } from '../src/tiers.js';
+import { COMPETITION_BY_ID, matchedSkill, payoutFor } from '../src/competitions.js';
+import { createAiPool } from '../server/aiPool.js';
+import { Store } from '../server/db.js';
+import { DatabaseSync } from 'node:sqlite';
+import { mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 
 class Client {
   constructor(url) {
@@ -72,8 +79,9 @@ async function client() {
   return c;
 }
 async function boot(env = {}) {
-  const config = { ...loadConfig({}), dbPath: ':memory:', staticDir: 'does-not-exist', ...env };
-  app = createApp(config);
+  // Most tests were written for small online stakes; competitions tests raise the coins.
+  const config = { ...loadConfig({}), dbPath: ':memory:', staticDir: 'does-not-exist', startingCoins: 5000, ...env };
+  app = createApp(config, { aiPool: env.aiPool });
   const port = await app.listen(0);
   url = `ws://localhost:${port}/ws`;
   return config;
@@ -286,4 +294,114 @@ describe('online matches', () => {
     const over = await north.next('game.over', () => true, 4000);
     expect(over).toMatchObject({ reason: 'abandon', winner: 1 });
   }, 10000);
+});
+
+describe('competitions against computer players', () => {
+  const fastPool = { choose: async (state) => actionsFor(state)[0], close: async () => {} };
+  const compBoot = (env = {}) =>
+    boot({ startingCoins: 2_000_000, aiIntroMs: 0, aiMinThinkMs: 0, turnSeconds: 0, messagesPerSecond: 100000, aiPool: fastPool, ...env });
+
+  it('gives new players 2M coins by default', () => {
+    expect(loadConfig({}).startingCoins).toBe(2_000_000);
+  });
+
+  it('charges the entry, draws a matched computer opponent and blocks unaffordable competitions', async () => {
+    await compBoot();
+    const c = await client();
+    await c.req('auth.guest', { name: 'Lina' });
+    await expect(c.req('competition.join', { competition: 'nampula' })).rejects.toMatchObject({ code: 'not-enough-coins' });
+    await expect(c.req('competition.join', { competition: 'atlantis' })).rejects.toMatchObject({ code: 'unknown-competition' });
+    const joined = await c.req('competition.join', { competition: 'cuamba', extraCapture: false });
+    const start = await c.next('match.start');
+    expect(start).toMatchObject({ competition: 'cuamba', stake: 1_000_000, opponentConnected: true });
+    expect(start.opponent.bot).toBe(true);
+    expect(start.opponent.skill).toBeGreaterThanOrEqual(1);
+    expect(start.opponent.skill).toBeLessThanOrEqual(matchedSkill(COMPETITION_BY_ID.cuamba, 1200));
+    expect(joined.side).toBe(start.side);
+    const { profile } = await c.req('profile.get');
+    expect(profile.coins).toBe(1_000_000);
+    await expect(c.req('competition.join', { competition: 'cuamba' })).rejects.toMatchObject({ code: 'in-game' });
+  });
+
+  it('records a resignation as a lost competition', async () => {
+    await compBoot();
+    const c = await client();
+    await c.req('auth.guest', { name: 'Lina' });
+    const { gameId } = await c.req('competition.join', { competition: 'cuamba' });
+    await c.req('game.resign', { gameId });
+    const over = await c.next('game.over');
+    expect(over).toMatchObject({ reason: 'resign', payout: 0, competition: 'cuamba' });
+    expect(over.ratingDelta).toBeLessThan(0);
+    expect(over.profile.coins).toBe(1_000_000);
+    expect(over.profile.career).toMatchObject({ aiGames: 1, aiLosses: 1, tournaments: 0, rank: 1 });
+  });
+
+  it('plays a full competition game with the computer moving by itself', async () => {
+    await compBoot();
+    const c = await client();
+    await c.req('auth.guest', { name: 'Lina' });
+    const { gameId, side } = await c.req('competition.join', { competition: 'cuamba' });
+    let state = (await c.next('match.start')).state;
+    let over = null;
+    for (let i = 0; i < 4000 && !over; i++) {
+      if (state.status !== 'over' && actingPlayer(state) === side) {
+        const actions = actionsFor(state);
+        await c.req('game.action', { gameId, action: actions[(i * 5) % actions.length] });
+      }
+      const upd = await c.next('game.update');
+      state = upd.state;
+      if (state.status === 'over') over = await c.next('game.over');
+    }
+    expect(over).not.toBe(null);
+    const outcome = over.winner === null ? 'draw' : over.winner === side ? 'win' : 'loss';
+    expect(over.payout).toBe(payoutFor(COMPETITION_BY_ID.cuamba, outcome));
+    expect(over.profile.coins).toBe(1_000_000 + over.payout);
+    expect(over.profile.career.aiGames).toBe(1);
+    expect(over.profile.career.tournaments).toBe(outcome === 'win' ? 1 : 0);
+    if (outcome === 'win') {
+      expect(over.profile.career.trophies).toEqual({ cuamba: 1 });
+      expect(over.profile.career.winnings).toBe(2_000_000);
+    }
+  }, 30000);
+
+  it('stores uploaded avatars and rejects anything that is not a small image', async () => {
+    await compBoot();
+    const c = await client();
+    await c.req('auth.guest', { name: 'Lina' });
+    const avatar = 'data:image/jpeg;base64,/9j/4AAQSkZJRg==';
+    expect((await c.req('profile.avatar', { avatar })).profile.avatar).toBe(avatar);
+    await expect(c.req('profile.avatar', { avatar: 'https://evil/x.png' })).rejects.toMatchObject({ code: 'bad-avatar' });
+    await expect(c.req('profile.avatar', { avatar: `data:image/png;base64,${'A'.repeat(14000)}` })).rejects.toMatchObject({
+      code: 'bad-avatar',
+    });
+    expect((await c.req('profile.avatar', { avatar: null })).profile.avatar).toBe(null);
+  });
+
+  it('runs computer searches in a worker thread', async () => {
+    const pool = createAiPool({ size: 1 });
+    const state = createGame({ columns: 8 });
+    const action = await pool.choose(state, 4);
+    expect(actionsFor(state)).toContainEqual(action);
+    await pool.close();
+  });
+
+  it('adds the career columns to an existing database', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'ntx-'));
+    const path = join(dir, 'old.db');
+    const old = new DatabaseSync(path);
+    old.exec(`CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, avatar TEXT, fb_id TEXT UNIQUE,
+      coins INTEGER NOT NULL, games INTEGER NOT NULL DEFAULT 0, wins INTEGER NOT NULL DEFAULT 0, losses INTEGER NOT NULL DEFAULT 0,
+      draws INTEGER NOT NULL DEFAULT 0, rating INTEGER NOT NULL DEFAULT 1200, last_bonus_at INTEGER NOT NULL DEFAULT 0,
+      last_store_at INTEGER NOT NULL DEFAULT 0, created_at INTEGER NOT NULL);
+      INSERT INTO users (name, coins, created_at) VALUES ('Velho', 5000, 0);`);
+    old.close();
+    const store = new Store(path);
+    const user = store.getUser(1);
+    expect(user).toMatchObject({ name: 'Velho', coins: 5000, ai_rating: 1200, tournaments: 0, winnings: 0 });
+    expect(store.recordCompetitionResult(1, { opponentRating: 1200, score: 1, competition: 'cuamba', winnings: 2_000_000 })).toBe(12);
+    expect(store.getUser(1)).toMatchObject({ ai_wins: 1, tournaments: 1, winnings: 2_000_000, ai_rating: 1212 });
+    expect(store.trophies(1)).toEqual({ cuamba: 1 });
+    store.close();
+    rmSync(dir, { recursive: true, force: true });
+  });
 });

@@ -44,10 +44,10 @@
             <span class="tile-title" data-i18n="tile.online">Play online</span>
             <span class="tile-sub" data-i18n="tile.onlineSub">1 on 1 · win coins</span>
           </button>
-          <button class="tile blue" data-setup="ai">
-            <svg class="tile-art" viewBox="0 0 64 64" aria-hidden="true"><rect x="14" y="20" width="36" height="28" rx="6" /><path d="M32 12v8M24 32h.01M40 32h.01M25 41h14" /></svg>
+          <button class="tile blue" id="btn-arena">
+            <svg class="tile-art" viewBox="0 0 64 64" aria-hidden="true"><path d="M20 12h24v12a12 12 0 0 1-24 0zM20 16h-8c0 7 4 11 9 12M44 16h8c0 7-4 11-9 12M32 36v8M22 54h20l-2-10H24z" /></svg>
             <span class="tile-title" data-i18n="tile.ai">vs Computer</span>
-            <span class="tile-sub" data-i18n="tile.aiSub">Easy · Medium · Hard</span>
+            <span class="tile-sub" data-i18n="tile.aiSub">Competitions · win coins</span>
           </button>
           <button class="tile purple" data-setup="local">
             <svg class="tile-art" viewBox="0 0 64 64" aria-hidden="true"><circle cx="22" cy="24" r="7" /><circle cx="42" cy="24" r="7" /><path d="M10 50c1-9 6-13 12-13s11 4 12 13M30 50c1-9 6-13 12-13s11 4 12 13" /></svg>
@@ -334,6 +334,80 @@
         <div class="sheet-actions start">
           <button class="btn back" data-back aria-label="Back" data-i18n-aria="common.back"></button>
         </div>
+      </div>
+    </section>
+
+    <!-- vs Computer: competitions -->
+    <section id="screen-arena" class="screen" hidden>
+      <div class="panel wide scroll lobby-panel arena-panel">
+        <div class="profile-card">
+          <button class="avatar-frame avatar-edit" id="arena-avatar-btn" title="Change photo" data-i18n-title="arena.changePhoto" aria-label="Change photo" data-i18n-aria="arena.changePhoto">
+            <span class="avatar" id="arena-avatar" aria-hidden="true"></span>
+            <span class="avatar-cam" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 8h3l2-3h6l2 3h3v11H4zM12 17a4 4 0 1 0 0-8 4 4 0 0 0 0 8z" /></svg></span>
+          </button>
+          <input type="file" id="arena-avatar-file" accept="image/*" hidden />
+          <div class="profile-main">
+            <div class="profile-name"><span id="arena-name"></span> <span class="fb-badge" id="arena-fb" hidden title="Facebook">f</span></div>
+            <div class="profile-level"><span class="rank-title" id="arena-rank"></span><span class="source-pill" id="arena-source"></span></div>
+          </div>
+          <div class="coin-box static" title="Coins" data-i18n-title="account.coins">
+            <span class="coin" aria-hidden="true"></span><b id="arena-coins">0</b>
+          </div>
+        </div>
+        <div class="stat-grid" id="arena-stats"></div>
+        <div class="chip-row account-actions">
+          <button class="chip gift" id="arena-bonus"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11h16v9H4zM3 7h18v4H3zM12 7v13M12 7c-2-4-6-4-6-1.5S10 7 12 7zm0 0c2-4 6-4 6-1.5S14 7 12 7z" /></svg><span id="arena-bonus-text"></span></button>
+          <button class="chip" id="arena-store"><span class="coin" aria-hidden="true"></span><span data-i18n="account.store">Get coins</span></button>
+          <button class="chip" id="arena-leaderboard"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4h8v5a4 4 0 0 1-8 0zM8 6H4.5c0 3 1.5 4.5 3.7 4.8M16 6h3.5c0 3-1.5 4.5-3.7 4.8M12 13v4M8 20h8l-1-3H9z" /></svg><span data-i18n="account.leaderboard">Leaderboard</span></button>
+          <button class="chip" id="arena-rename"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16zM13.5 6.5l4 4" /></svg><span data-i18n="account.rename">Rename</span></button>
+          <button class="chip fb" id="arena-signin"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4h5v16h-5M10 8l-4 4 4 4M6 12h9" /></svg><span data-i18n="arena.signin">Sign in to save online</span></button>
+        </div>
+        <fieldset class="capture-choice">
+          <legend data-i18n="online.captureRule">Capture rule for this game</legend>
+          <div class="seg-row">
+            <label class="seg-opt"><input type="radio" name="arena-rule" value="column" checked /> <span data-i18n="online.captureColumn">Column only (standard)</span></label>
+            <label class="seg-opt"><input type="radio" name="arena-rule" value="extra" /> <span data-i18n="online.captureExtra">Column + one extra bin of my choice</span></label>
+          </div>
+        </fieldset>
+        <div class="lobby-head">
+          <h2 data-i18n="arena.title">Competitions</h2>
+        </div>
+        <div class="carousel">
+          <button class="car-arrow prev" id="comp-prev" aria-label="Previous" data-i18n-aria="online.prevRoom">‹</button>
+          <ol class="tier-list" id="comp-list"></ol>
+          <button class="car-arrow next" id="comp-next" aria-label="Next" data-i18n-aria="online.nextRoom">›</button>
+        </div>
+        <p class="note" data-i18n="arena.note">Opponents are computer players drawn at random, from relaxed up to your level (skill 1–20). Win to take twice the entry.</p>
+        <div class="sheet-actions start">
+          <button class="btn back" data-back aria-label="Back" data-i18n-aria="common.back"></button>
+        </div>
+      </div>
+    </section>
+
+    <!-- vs Computer: opponent draw -->
+    <section id="screen-draw" class="screen dim draw-screen" hidden>
+      <div class="panel sheet draw-panel">
+        <div class="room-banner" id="draw-place"></div>
+        <p class="draw-stake" id="draw-stake"></p>
+        <div class="draw-reel" id="draw-reel">
+          <span class="draw-pointer" aria-hidden="true"></span>
+          <ol class="draw-strip" id="draw-strip"></ol>
+        </div>
+        <p class="draw-status" id="draw-status" aria-live="polite"></p>
+        <div class="versus draw-result" id="draw-result" hidden>
+          <div class="vs-player">
+            <div class="vs-frame"><span class="avatar" id="draw-me"></span></div>
+            <div class="vs-name" id="draw-me-name"></div>
+          </div>
+          <div class="vs-mid">VS</div>
+          <div class="vs-player">
+            <div class="vs-frame"><span class="avatar" id="draw-opp"></span></div>
+            <div class="vs-name" id="draw-opp-name"></div>
+            <div class="draw-skill" id="draw-opp-skill"></div>
+            <div class="note" id="draw-opp-record"></div>
+          </div>
+        </div>
+        <p class="note" id="draw-side"></p>
       </div>
     </section>
 

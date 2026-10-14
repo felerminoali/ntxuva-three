@@ -2925,3 +2925,315 @@ input[type='text'] {
     transition: none !important;
   }
 }
+
+/* --- vs Computer: competitions lobby ------------------------------------------------------ */
+
+.avatar-edit {
+  border: 0;
+  cursor: pointer;
+}
+
+.avatar-edit .avatar {
+  width: 64px;
+  height: 64px;
+  font-size: 1.8rem;
+}
+
+.avatar-cam {
+  position: absolute;
+  right: -4px;
+  bottom: -4px;
+  width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: linear-gradient(180deg, #ffe27a, #e0a422);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.45);
+}
+
+.avatar-cam svg {
+  width: 15px;
+  height: 15px;
+  fill: none;
+  stroke: #3a2200;
+  stroke-width: 2;
+  stroke-linejoin: round;
+}
+
+.rank-title {
+  font-weight: 800;
+  color: var(--gold);
+}
+
+.source-pill {
+  margin-left: 8px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--muted);
+  background: rgba(255, 255, 255, 0.08);
+  white-space: nowrap;
+}
+
+.source-pill.server {
+  color: #c9f5a8;
+  background: rgba(98, 180, 60, 0.18);
+}
+
+.coin-box.static {
+  cursor: default;
+}
+
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 8px;
+  margin: 10px 0;
+}
+
+.stat-grid .stat {
+  display: grid;
+  gap: 2px;
+  padding: 8px 6px;
+  text-align: center;
+  border-radius: 12px;
+  background: linear-gradient(180deg, rgba(255, 220, 160, 0.1), rgba(0, 0, 0, 0.25));
+  box-shadow: inset 0 0 0 1px rgba(255, 220, 160, 0.12);
+}
+
+.stat-grid .stat b {
+  font-size: 1.15rem;
+  color: var(--gold);
+  font-variant-numeric: tabular-nums;
+}
+
+.stat-grid .stat span {
+  font-size: 0.68rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.tier.friendly {
+  --hue: 200;
+}
+
+.friendly-levels {
+  font-weight: 800;
+  font-size: 0.95rem;
+}
+
+.comp-skill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.skill-bar {
+  --skill: 0.5;
+  position: relative;
+  display: inline-block;
+  width: 54px;
+  height: 7px;
+  border-radius: 99px;
+  overflow: hidden;
+  background: rgba(0, 0, 0, 0.45);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+}
+
+.skill-bar::after {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: calc(var(--skill) * 100%);
+  border-radius: inherit;
+  background: linear-gradient(90deg, #8ee35a, #f2c14e 55%, #e0661f);
+}
+
+/* --- vs Computer: opponent draw ---------------------------------------------------------- */
+
+.draw-panel {
+  width: min(560px, 100%);
+  text-align: center;
+  overflow: hidden;
+}
+
+.draw-stake {
+  margin: -4px 0 10px;
+  font-weight: 700;
+  color: var(--gold);
+}
+
+.draw-reel {
+  position: relative;
+  overflow: hidden;
+  padding: 12px 0;
+  border-radius: 16px;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0.2));
+  box-shadow: inset 0 0 0 1px rgba(255, 220, 160, 0.14);
+  mask-image: linear-gradient(90deg, transparent, #000 18%, #000 82%, transparent);
+}
+
+.draw-pointer {
+  position: absolute;
+  z-index: 2;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 3px;
+  transform: translateX(-50%);
+  background: linear-gradient(180deg, #ffe27a, #e0661f);
+  box-shadow: 0 0 12px rgba(255, 210, 90, 0.8);
+}
+
+.draw-pointer::before,
+.draw-pointer::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 8px solid transparent;
+}
+
+.draw-pointer::before {
+  top: 0;
+  border-top-color: #ffe27a;
+}
+
+.draw-pointer::after {
+  bottom: 0;
+  border-bottom-color: #e0661f;
+}
+
+.draw-strip {
+  display: flex;
+  gap: 10px;
+  margin: 0;
+  padding: 0 0 0 50%;
+  list-style: none;
+  will-change: transform;
+}
+
+.draw-card {
+  flex: none;
+  width: 86px;
+  display: grid;
+  justify-items: center;
+  gap: 5px;
+  padding: 8px 4px;
+  border-radius: 12px;
+  background: linear-gradient(180deg, #4a2e1a, #24160d);
+  box-shadow: inset 0 0 0 1px rgba(255, 220, 160, 0.12);
+}
+
+.draw-card .avatar {
+  width: 52px;
+  height: 52px;
+  font-size: 1.4rem;
+}
+
+.draw-card-name {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.draw-card .skill-bar {
+  width: 60px;
+}
+
+.draw-screen.revealed .draw-card.chosen {
+  background: linear-gradient(180deg, #8a5a12, #3a2200);
+  box-shadow:
+    0 0 0 2px #ffe27a,
+    0 0 22px rgba(255, 210, 90, 0.7);
+  transition: box-shadow 0.3s, background 0.3s;
+}
+
+.draw-status {
+  margin: 12px 0 4px;
+  font-weight: 800;
+  font-size: 1.05rem;
+}
+
+.draw-result {
+  animation: draw-pop 0.45s cubic-bezier(.2, 1.4, .4, 1) both;
+}
+
+.draw-skill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.draw-result .note {
+  margin: 0;
+  font-size: 0.72rem;
+}
+
+@keyframes draw-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.85);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (max-width: 720px) {
+  .stat-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+  }
+  .stat-grid .stat {
+    padding: 6px 4px;
+  }
+  .stat-grid .stat b {
+    font-size: 1rem;
+  }
+  .avatar-edit .avatar {
+    width: 54px;
+    height: 54px;
+  }
+}
+
+@media (max-height: 520px) and (orientation: landscape) {
+  .stat-grid {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    margin: 6px 0;
+  }
+  .stat-grid .stat {
+    padding: 4px;
+  }
+  .draw-panel {
+    padding: 10px 14px;
+  }
+  .draw-reel {
+    padding: 6px 0;
+  }
+  .draw-card .avatar {
+    width: 40px;
+    height: 40px;
+  }
+  .draw-result .vs-frame {
+    width: 64px;
+  }
+  .draw-status {
+    margin: 6px 0 2px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .draw-result {
+    animation: none;
+  }
+}

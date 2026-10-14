@@ -6,6 +6,7 @@ import { mkdirSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { randomBytes } from 'node:crypto';
 import { DatabaseSync } from 'node:sqlite';
+import { eloDelta } from '../src/competitions.js';
 
 const SCHEMA = `
 CREATE TABLE IF NOT EXISTS users (
@@ -51,9 +52,34 @@ CREATE TABLE IF NOT EXISTS games (
   started_at INTEGER NOT NULL,
   ended_at INTEGER
 );
+CREATE TABLE IF NOT EXISTS competition_wins (
+  user_id INTEGER NOT NULL REFERENCES users(id),
+  competition TEXT NOT NULL,
+  wins INTEGER NOT NULL DEFAULT 0,
+  PRIMARY KEY (user_id, competition)
+);
 `;
 
-const FIELDS = 'id, name, avatar, fb_id, coins, games, wins, losses, draws, rating, last_bonus_at, last_store_at';
+/** Columns added after the first release; created on start-up when missing. */
+const MIGRATIONS = {
+  users: {
+    ai_games: 'INTEGER NOT NULL DEFAULT 0',
+    ai_wins: 'INTEGER NOT NULL DEFAULT 0',
+    ai_losses: 'INTEGER NOT NULL DEFAULT 0',
+    ai_draws: 'INTEGER NOT NULL DEFAULT 0',
+    ai_rating: 'INTEGER NOT NULL DEFAULT 1200',
+    winnings: 'INTEGER NOT NULL DEFAULT 0',
+    tournaments: 'INTEGER NOT NULL DEFAULT 0',
+  },
+  games: {
+    kind: "TEXT NOT NULL DEFAULT 'online'",
+    bot: 'TEXT',
+  },
+};
+
+const FIELDS =
+  'id, name, avatar, fb_id, coins, games, wins, losses, draws, rating, last_bonus_at, last_store_at, ' +
+  'ai_games, ai_wins, ai_losses, ai_draws, ai_rating, winnings, tournaments';
 
 export class Store {
   constructor(path) {
@@ -62,6 +88,16 @@ export class Store {
     this.db.exec('PRAGMA foreign_keys = ON;');
     if (path !== ':memory:') this.db.exec('PRAGMA journal_mode = WAL;');
     this.db.exec(SCHEMA);
+    this.migrate();
+  }
+
+  migrate() {
+    for (const [table, columns] of Object.entries(MIGRATIONS)) {
+      const have = new Set(this.db.prepare(`PRAGMA table_info(${table})`).all().map((c) => c.name));
+      for (const [name, type] of Object.entries(columns)) {
+        if (!have.has(name)) this.db.exec(`ALTER TABLE ${table} ADD COLUMN ${name} ${type}`);
+      }
+    }
   }
 
   close() {
@@ -157,12 +193,12 @@ export class Store {
 
   // --- Games --------------------------------------------------------------------------------
 
-  recordGameStart({ id, tier, stake, extraCapture, southId, northId }) {
+  recordGameStart({ id, tier, stake, extraCapture, southId, northId, kind = 'online', bot = null }) {
     this.db
       .prepare(
-        'INSERT INTO games (id, tier, stake, extra_capture, south_id, north_id, started_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
+        'INSERT INTO games (id, tier, stake, extra_capture, south_id, north_id, started_at, kind, bot) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
       )
-      .run(id, tier, stake, extraCapture ? 1 : 0, southId, northId, Date.now());
+      .run(id, tier, stake, extraCapture ? 1 : 0, southId, northId, Date.now(), kind, bot);
   }
 
   recordGameEnd({ id, winnerId, reason, turns, moves }) {
@@ -187,9 +223,58 @@ export class Store {
     return deltaA;
   }
 
+  /** Adds prize money to a player's lifetime winnings. */
+  addWinnings(userId, amount) {
+    this.db.prepare('UPDATE users SET winnings = winnings + ? WHERE id = ?').run(amount, userId);
+  }
+
+  /**
+   * Records a competition game against a computer player and returns the rating change.
+   * `score` is 1 (win), 0.5 (draw) or 0 (loss); a win also counts as a tournament won.
+   */
+  recordCompetitionResult(userId, { opponentRating, score, competition, winnings = 0 }) {
+    const user = this.getUser(userId);
+    const delta = eloDelta(user.ai_rating, opponentRating, score);
+    const field = score === 1 ? 'ai_wins' : score === 0 ? 'ai_losses' : 'ai_draws';
+    this.db
+      .prepare(`UPDATE users SET ai_games = ai_games + 1, ${field} = ${field} + 1, ai_rating = ai_rating + ? WHERE id = ?`)
+      .run(delta, userId);
+    if (winnings) this.addWinnings(userId, winnings);
+    if (score === 1) {
+      this.db.prepare('UPDATE users SET tournaments = tournaments + 1 WHERE id = ?').run(userId);
+      this.db
+        .prepare(
+          'INSERT INTO competition_wins (user_id, competition, wins) VALUES (?, ?, 1) ' +
+            'ON CONFLICT(user_id, competition) DO UPDATE SET wins = wins + 1',
+        )
+        .run(userId, competition);
+    }
+    return delta;
+  }
+
+  /** Competitions won, by competition id. */
+  trophies(userId) {
+    const out = {};
+    for (const r of this.db.prepare('SELECT competition, wins FROM competition_wins WHERE user_id = ?').all(userId)) {
+      out[r.competition] = r.wins;
+    }
+    return out;
+  }
+
+  /** 1-based position of the player in the coin ranking. */
+  rankOf(user) {
+    const row = this.db
+      .prepare('SELECT COUNT(*) AS n FROM users WHERE coins > ? OR (coins = ? AND id < ?)')
+      .get(user.coins, user.coins, user.id);
+    return Number(row.n) + 1;
+  }
+
   leaderboard(limit = 20) {
     return this.db
-      .prepare('SELECT id, name, avatar, coins, wins, games, rating FROM users ORDER BY coins DESC, rating DESC LIMIT ?')
+      .prepare(
+        'SELECT id, name, avatar, coins, wins + ai_wins AS wins, games + ai_games AS games, rating, ai_rating, tournaments ' +
+          'FROM users ORDER BY coins DESC, rating DESC LIMIT ?',
+      )
       .all(limit)
       .map((r) => ({ ...r }));
   }

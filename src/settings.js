@@ -22,6 +22,7 @@ export const DEFAULT_SETTINGS = Object.freeze({
   /** '' = auto-detect from the browser (Portuguese by default). */
   language: '',
   onlineExtraCapture: false,
+  arenaExtraCapture: false,
 });
 
 export function loadSettings() {

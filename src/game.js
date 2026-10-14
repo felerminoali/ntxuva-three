@@ -22,6 +22,7 @@ import { TUTORIAL_COLUMNS, TUTORIAL_STEPS, localizeStep } from './tutorial.js';
 import { getLanguage, onLanguageChange, t } from './i18n.js';
 import { moveError, playerName, plural } from './describe.js';
 import { TIER_BY_ID, formatCoins, levelFor } from './tiers.js';
+import { COMPETITION_BY_ID, MAX_SKILL } from './competitions.js';
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const TRANSIENT_LAYERS = ['legal', 'extra', 'hint', 'preview', 'capture', 'focus', 'hover'];
@@ -299,7 +300,10 @@ export class GameSession {
 
   /** Centre label of the top bar: the online room's place, otherwise the game mode. */
   hudPlace() {
-    if (this.mode === 'online') return TIER_BY_ID[this.online?.tier]?.place ?? '';
+    if (this.mode === 'online') {
+      const room = COMPETITION_BY_ID[this.online?.competition] ?? TIER_BY_ID[this.online?.tier];
+      return room?.place ?? '';
+    }
     if (this.mode === 'ai') return t('play.ai');
     if (this.mode === 'local') return t('play.local');
     if (this.mode === 'practice') return t('play.practice');
@@ -333,6 +337,7 @@ export class GameSession {
       if (profile) {
         const level = profile.level ?? levelFor(profile);
         details.push([t('hud.level'), String(level)]);
+        if (profile.bot) details.push([t('hud.skill'), t('arena.skillOf', { n: profile.skill, max: MAX_SKILL })]);
         if (profile.rating !== undefined) details.push([t('hud.rating'), String(profile.rating)]);
         if (profile.games !== undefined) details.push([t('hud.record'), `${profile.wins ?? 0} / ${profile.games}`]);
         if (profile.facebook) details.push([t('hud.facebook'), t('hud.yes')]);
@@ -754,6 +759,7 @@ export class GameSession {
     this.online = {
       gameId: match.gameId,
       tier: match.tier,
+      competition: match.competition ?? null,
       stake: match.stake,
       extraCapture: match.extraCapture,
       opponent: match.opponent,
@@ -935,6 +941,7 @@ export class GameSession {
       this.online.queue.length = 0;
       this.online = null;
     }
+    this.onlineLink?.dispose?.();
     this.onlineLink = null;
   }
 

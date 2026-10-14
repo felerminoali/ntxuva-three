@@ -44,6 +44,9 @@ export class OnlineController {
     this.lastExtra = false;
     this.bonusTimer = null;
     this.wired = false;
+    /** Competitions controller (set by main.js); handles computer-opponent matches. */
+    this.arena = null;
+    this.profileListeners = new Set();
   }
 
   // --- Entry ---------------------------------------------------------------------------
@@ -333,9 +336,16 @@ export class OnlineController {
     }
   }
 
+  /** Called whenever the signed-in profile changes (or the player signs out). */
+  onProfileChange(fn) {
+    this.profileListeners.add(fn);
+  }
+
   /** The profile/coins strip at the top of the main menu. */
   renderMenuBar() {
-    const p = this.profile;
+    for (const fn of this.profileListeners) fn(this.profile);
+    // Without an account the strip shows the career saved on this device.
+    const p = this.profile ?? this.arena?.deviceProfile() ?? null;
     const avatar = $('menu-avatar');
     $('menu-coins').hidden = !p;
     $('menu-level').hidden = !p;
@@ -346,8 +356,8 @@ export class OnlineController {
       return;
     }
     fillAvatar(avatar, p);
-    $('menu-name').textContent = p.name;
-    $('menu-sub').textContent = t('account.record', { w: p.wins, l: p.losses, r: p.rating });
+    $('menu-name').textContent = p.name || t('menu.guest');
+    $('menu-sub').textContent = p.device ? t('arena.deviceSub') : t('account.record', { w: p.wins, l: p.losses, r: p.rating });
     $('menu-level').textContent = String(p.level);
     $('menu-coins-n').textContent = formatCoins(p.coins);
     $('menu-coins').title = `${p.coins.toLocaleString()} ${t('account.coins')}`;
@@ -533,6 +543,18 @@ export class OnlineController {
 
   beginMatch(match) {
     this.queuedTier = null;
+    if (match.competition && this.arena) {
+      this.arena.beginServerMatch(match, {
+        selfName: this.profile?.name ?? t('online.you'),
+        selfProfile: this.profile ?? null,
+        send: (action) => this.net.request('game.action', { gameId: match.gameId, action }),
+        remaining: (deadline) => this.net.remaining(deadline),
+        errorText: (err) => this.errorText(err),
+        resign: () => this.resign(),
+        confirmLeave: () => this.confirmLeave(),
+      });
+      return;
+    }
     this.lastTier = match.tier;
     this.lastExtra = match.extraCapture;
     const tier = TIER_BY_ID[match.tier];

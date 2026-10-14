@@ -6,7 +6,7 @@ import { describeRecordText, playerName } from './describe.js';
 import { t } from './i18n.js';
 
 const $ = (id) => document.getElementById(id);
-const SCREENS = ['menu', 'play', 'rules', 'settings', 'about', 'pause', 'end', 'signin', 'online', 'searching', 'store', 'leaderboard'];
+const SCREENS = ['menu', 'play', 'rules', 'settings', 'about', 'pause', 'end', 'signin', 'online', 'searching', 'store', 'leaderboard', 'arena', 'draw'];
 
 export class UI {
   constructor(handlers) {
