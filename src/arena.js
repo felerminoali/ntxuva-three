@@ -20,8 +20,8 @@ const envMs = (value, fallback) => {
   const n = Number(value);
   return value === undefined || value === '' || !Number.isFinite(n) || n < 0 ? fallback : Math.trunc(n);
 };
-/** How long the drawn opponent stays on screen after the roulette stops (Vite env `VITE_DRAW_WAIT_MS`). */
-export const DRAW_WAIT_MS = envMs(import.meta.env?.VITE_DRAW_WAIT_MS, 1500);
+/** How long the drawn opponent stays on screen after the roulette stops (build env `DRAW_WAIT_MS`). */
+export const DRAW_WAIT_MS = envMs(typeof __DRAW_WAIT_MS__ === 'undefined' ? undefined : __DRAW_WAIT_MS__, 1500);
 
 const reducedMotion = () => !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 const drawSpinMs = () => (reducedMotion() ? 600 : 2800);

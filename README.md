@@ -74,7 +74,7 @@ The **vs Computer** tile opens a lobby with your career card and a carousel of c
 - **Career:** the database keeps each player's avatar (which you can upload), coins, rating with a rank title (Novice up to Grandmaster), games, wins and losses, win rate, total winnings, tournaments won (one trophy per competition victory) and leaderboard position.
 - **Storage:** signed in, the career is saved on the server (SQLite) and the server runs the computer player. Not signed in, everything runs and is saved on the device (`localStorage`), which works even on a static host such as Vercel. Leaving an unfinished competition counts as a loss.
 - The capture rule (column only, or column plus extra bin) and the **board size** (4 × 8 up to 4 × 24) are chosen in the lobby. The board size is shared with Settings, so friendly games use it too; small boards are easier to play on a phone.
-- **Draw wait:** after the opponent roulette stops, the result stays on screen for `VITE_DRAW_WAIT_MS` milliseconds (default 1500) on the device, or the server's `DRAW_WAIT_MS` when signed in. Set `VITE_DRAW_WAIT_MS` in Vercel's environment variables and redeploy (Vite reads it at build time).
+- **Draw wait:** after the opponent roulette stops, the result stays on screen for `DRAW_WAIT_MS` milliseconds (default 1500). Set `DRAW_WAIT_MS` in Vercel's environment variables for the client (read at build time, so redeploy) and on the server for signed-in players.
 
 ## Lucky wheel (getting coins back)
 
